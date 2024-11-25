@@ -1,4 +1,4 @@
-module ser_to_parallel(
+module SIPO(
     input BitCLK,
     input Reset,
     output [9:0] RxParallel_10,
