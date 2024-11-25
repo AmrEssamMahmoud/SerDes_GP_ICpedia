@@ -1,6 +1,7 @@
 module top_module (
     input BitCLK,
-    input BitCLK_10,
+    input BitCLK_10_Tx,
+    input BitCLK_10_Rx,
     input Reset,
     input TxDataK,
     input [7:0] TxParallel_8,
@@ -11,9 +12,9 @@ module top_module (
     wire [9:0] TxParallel_10, RxParallel_10;
     wire Serial;
     
-    encoder encoder(.BitCLK_10(BitCLK_10), .Reset(Reset), .TxParallel_8(TxParallel_8), .TxDataK(TxDataK), .TxParallel_10(TxParallel_10));
+    encoder encoder(.BitCLK_10(BitCLK_10_Tx), .Reset(Reset), .TxParallel_8(TxParallel_8), .TxDataK(TxDataK), .TxParallel_10(TxParallel_10));
     PISO PISO(.BitCLK(BitCLK), .Reset(Reset), .Serial(Serial), .TxParallel_10(TxParallel_10));
     SIPO SIPO(.BitCLK(BitCLK), .Reset(Reset), .Serial(Serial), .RxParallel_10(RxParallel_10));
-    decoder decoder(.BitCLK_10(BitCLK_10), .Reset(Reset), .RxParallel_10(TxParallel_10), .RxDataK(TxDataK), .RxParallel_8(TxParallel_8));
+    decoder decoder(.BitCLK_10(BitCLK_10_Rx), .Reset(Reset), .RxParallel_10(TxParallel_10), .RxDataK(TxDataK), .RxParallel_8(TxParallel_8));
     
 endmodule
