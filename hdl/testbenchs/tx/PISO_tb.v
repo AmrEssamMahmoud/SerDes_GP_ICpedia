@@ -1,4 +1,4 @@
-module tb();
+module PISO_tb();
   reg[9:0] TxParallel_10;
   reg BitCLK;
   reg Reset;
@@ -18,5 +18,6 @@ module tb();
     TxParallel_10 = 10'b0111111110;
     #100
     TxParallel_10 = 10'b0101010101;
-    $finish;
+    $stop();
   end
+  endmodule
