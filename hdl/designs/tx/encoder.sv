@@ -170,7 +170,7 @@ always @(posedge BitCLK_10, negedge Reset) begin
     if (!Reset) begin
         disparity <= 0;
     end else begin
-        if ((^TxParallel_6) ^ (^TxParallel_4)) begin
+        if (^TxParallel_10) begin
             disparity <= disparity + 1;
         end
     end
