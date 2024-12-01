@@ -20,7 +20,7 @@ package scoreboard_piso;
         virtual function void write_piso(sequence_item_piso packet);
             piso_q.push_back(packet);
             //**************************//
-            // TODO: Check Results Here //
+            // TODO: Check Results Here ///**/
             //**************************//
         endfunction 
 

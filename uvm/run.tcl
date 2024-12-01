@@ -1,7 +1,7 @@
 
 #Change this variable to one of the following values
 #TOP ENCODER PISO SIPO DECODER
-set design_block SIPO
+set design_block PISO
 
 set design_block_if [string cat [string tolower $design_block] _if]
 set path top
