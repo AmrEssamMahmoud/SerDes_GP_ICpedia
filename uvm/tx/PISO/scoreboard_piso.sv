@@ -21,6 +21,21 @@ package scoreboard_piso;
             piso_q.push_back(packet);
             //**************************//
             // TODO: Check Results Here ///**/
+            bit [9:0] expected_serial;
+            bit [9:0] actual_serial;
+
+            function new(string name = "uvm_piso_scoreboard", uvm_component parent = null);
+            super.new(name, parent);
+            endfunction
+
+            // Check if the output matches the expected value
+             virtual function void write(input bit serial);
+            // Compare the expected and actual serial data
+            actual_serial = serial;
+            if (actual_serial !== expected_serial) begin
+            `uvm_error("SERIAL_MISMATCH", "Mismatch between expected and actual serial data.")
+            end
+            endfunction
             //**************************//
         endfunction 
 

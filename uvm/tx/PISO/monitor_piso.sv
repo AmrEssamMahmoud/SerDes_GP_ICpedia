@@ -35,9 +35,28 @@ package monitor_piso;
 			@(posedge vif.BitCLK);
             //***************************//
             // TODO: Sample Outputs Here //
+			logic [9:0] expected_data;
+        logic [9:0] temp_reg;
+        int i;
+
+        // Process serial data and compare with expected output
+        forever begin
+            @(posedge vif.BitCLK);
+            if (vif.Reset == 0) begin
+                // Reset: expected data should be 0
+                expected_data = 10'b0;
+                temp_reg = 10'b0;
+            end else begin
+                // Shift expected data by one position
+                expected_data = expected_data >> 1;
+                expected_data[9] = vif.TxParallel_10[9]; // shift in the first bit of parallel data
+                temp_reg = expected_data;
+                ap_serial.write(vif.Serial); // Send serial output for analysis
+            end
             //***************************//
 			// example: resp.signal = vif.signal
 			item_collected_port.write(resp);
+		end
 		endtask : sample_item
 
 	endclass 
