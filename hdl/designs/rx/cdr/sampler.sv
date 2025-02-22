@@ -18,7 +18,7 @@ module sampler (
 
     assign Dn_1 = data_clock_inv ? data_sample1 : data_sample2;
     assign Dn = data_clock ? data_sample1 : data_sample2;
-    assign Pn = phase_clock ? phase_sample1 : phase_sample2;
+    assign Pn = phase_clock ? phase_sample2 : phase_sample1;
 
     // Data sampling
     always @(posedge data_clock or negedge Reset) begin
