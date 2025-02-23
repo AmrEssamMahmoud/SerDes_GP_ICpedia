@@ -1,7 +1,7 @@
 package agent_block;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-    import sequencer_block::*;
+    import sequencer::*;
     `ifdef ENCODER
         import sequence_item_encoder::*;
         import driver_encoder::*;
@@ -28,7 +28,7 @@ package agent_block;
     class agent_block extends uvm_agent;
         `uvm_component_utils(agent_block)
 
-        sequencer_block sequencer_block_i;
+        sequencer sequencer_i;
         `ifdef ENCODER
             driver_encoder driver_block_i;
             monitor_encoder monitor_block_i;
@@ -52,7 +52,7 @@ package agent_block;
     
         function void build_phase(uvm_phase phase);
             super.build_phase(phase);
-            sequencer_block_i = sequencer_block::type_id::create("sequencer_block_i", this);
+            sequencer_i = sequencer::type_id::create("sequencer_i", this);
             `ifdef ENCODER
                 driver_block_i = driver_encoder::type_id::create("driver_block_i", this);
                 monitor_block_i = monitor_encoder::type_id::create("monitor_block_i", this);
@@ -77,7 +77,7 @@ package agent_block;
     
         function void connect_phase(uvm_phase phase);
             super.connect_phase(phase);
-            driver_block_i.seq_item_port.connect(sequencer_block_i.seq_item_export);        
+            driver_block_i.seq_item_port.connect(sequencer_i.seq_item_export);        
         endfunction 
     
     endclass

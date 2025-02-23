@@ -17,20 +17,20 @@ module top();
         end
     end
 
-    `ifdef TOP
-        top_if top_if (BitCLK, BitCLK_10);
-        top_module top_module (
+    `ifdef SERDES_TOP
+        serdes_top_if serdes_top_if (BitCLK, BitCLK_10);
+        serdes_top_module serdes_top_module (
             .BitCLK(BitCLK),
             .BitCLK_10(BitCLK_10),
-            .Reset(top_if.Reset),
-            .TxDataK(top_if.TxDataK),
-            .TxParallel_8(top_if.TxParallel_8[7:0]),
-            .RxDataK(top_if.RxDataK),
-            .Decode_Error(top_if.Decode_Error),
-            .Disparity_Error(top_if.Disparity_Error),
-            .RxParallel_8(top_if.RxParallel_8[7:0])
+            .Reset(serdes_top_if.Reset),
+            .TxDataK(serdes_top_if.TxDataK),
+            .TxParallel_8(serdes_top_if.TxParallel_8[7:0]),
+            .RxDataK(serdes_top_if.RxDataK),
+            .Decode_Error(serdes_top_if.Decode_Error),
+            .Disparity_Error(serdes_top_if.Disparity_Error),
+            .RxParallel_8(serdes_top_if.RxParallel_8[7:0])
         );
-        bind top_module assertions_top assertions_top_i(top_if.DUT);
+        bind serdes_top_module assertions_serdes_top assertions_serdes_top_i(serdes_top_if.DUT);
     `elsif ENCODER
         encoder_if encoder_if (BitCLK_10);
         encoder encoder(
@@ -92,8 +92,8 @@ module top();
     `endif
 
     initial begin
-        `ifdef TOP
-            uvm_config_db #(virtual top_if)::set(null, "*", "top_if", top_if);
+        `ifdef SERDES_TOP
+            uvm_config_db #(virtual serdes_top_if)::set(null, "*", "serdes_top_if", serdes_top_if);
         `elsif ENCODER
             uvm_config_db #(virtual encoder_if)::set(null, "*", "encoder_if", encoder_if);
         `elsif PISO

@@ -1,10 +1,10 @@
-package scoreboard;
+package scoreboard_serdes_top;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-    import sequence_item_top::*;
+    import sequence_item_serdes_top::*;
 
-    class scoreboard extends uvm_scoreboard;
-        `uvm_component_utils(scoreboard)
+    class scoreboard_serdes_top extends uvm_scoreboard;
+        `uvm_component_utils(scoreboard_serdes_top)
         
         int correct_count;
         int error_count;
@@ -14,11 +14,11 @@ package scoreboard;
         `uvm_analysis_imp_decl(_enc)
         `uvm_analysis_imp_decl(_dec)
         
-        uvm_analysis_imp_enc #(sequence_item_top, scoreboard) scoreboard_top_in;
-        uvm_analysis_imp_dec #(sequence_item_top, scoreboard) scoreboard_top_out;
+        uvm_analysis_imp_enc #(sequence_item_serdes_top, scoreboard_serdes_top) scoreboard_top_in;
+        uvm_analysis_imp_dec #(sequence_item_serdes_top, scoreboard_serdes_top) scoreboard_top_out;
         
-        sequence_item_top enc_q[$];
-        sequence_item_top dec_q[$];
+        sequence_item_serdes_top enc_q[$];
+        sequence_item_serdes_top dec_q[$];
 
         function new(string name="", uvm_component parent = null);
             super.new(name, parent);
@@ -26,13 +26,13 @@ package scoreboard;
             scoreboard_top_out = new("scoreboard_top_out", this);
         endfunction
 
-        virtual function void write_enc(sequence_item_top packet);
+        virtual function void write_enc(sequence_item_serdes_top packet);
             enc_q.push_back(packet);
             enc_packets++;
         endfunction 
         
-        virtual function void write_dec(sequence_item_top packet);
-            sequence_item_top enc_packet = enc_q.pop_front();
+        virtual function void write_dec(sequence_item_serdes_top packet);
+            sequence_item_serdes_top enc_packet = enc_q.pop_front();
             if (packet.output_data == enc_packet.input_data) begin
                 `uvm_info(get_type_name(), $sformatf("test_passed_data = %d", enc_packet.input_data.name), UVM_LOW)
                 correct_count ++;

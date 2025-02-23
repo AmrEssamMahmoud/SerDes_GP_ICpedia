@@ -1,14 +1,10 @@
 package test;
 	import uvm_pkg::*;
 	`include "uvm_macros.svh"
-	`ifdef TOP    
-		import env_top::*;
-    `else
-		import env_block::*;
-    `endif
-	`ifdef TOP
-		import sequence_item_top::*;
-		import sequence_top::*;
+	import env::*;
+	`ifdef SERDES_TOP
+		import sequence_item_serdes_top::*;
+		import sequence_serdes_top::*;
     `elsif ENCODER
 		import sequence_item_encoder::*;
 		import sequence_encoder::*;
@@ -30,13 +26,9 @@ package test;
 	class test extends uvm_test;
 		`uvm_component_utils(test)						
 		
-		`ifdef TOP    
-			env_top env_i;
-		`else
-			env_block env_i;
-		`endif
-		`ifdef TOP    
-			sequence_top sequence_i;
+		env env_i;
+		`ifdef SERDES_TOP
+			sequence_serdes_top sequence_i;
 		`elsif ENCODER
 			sequence_encoder sequence_i;
 		`elsif PISO
@@ -55,13 +47,9 @@ package test;
 
 		virtual function void build_phase(uvm_phase phase);
 			super.build_phase(phase);
-			`ifdef TOP    
-				env_i = env_top::type_id::create("env_i", this);		
-			`else
-				env_i = env_block::type_id::create("env_i", this);		
-			`endif
-			`ifdef TOP    
-				sequence_i = sequence_top::type_id::create("sequence_i",this);
+			env_i = env::type_id::create("env_i", this);		
+			`ifdef SERDES_TOP
+				sequence_i = sequence_serdes_top::type_id::create("sequence_i",this);
 			`elsif ENCODER
 				sequence_i = sequence_encoder::type_id::create("sequence_i",this);
 			`elsif PISO
@@ -82,10 +70,10 @@ package test;
 
 		virtual task run_phase(uvm_phase phase);
 				phase.raise_objection(this);
-				`ifdef TOP    
-					sequence_i.start(env_i.agent_top_in_i.sequencer_top_i);
+				`ifdef SERDES_TOP
+					sequence_i.start(env_i.agent_serdes_top_in_i.sequencer_i);
 				`else
-					sequence_i.start(env_i.agent_block_i.sequencer_block_i);
+					sequence_i.start(env_i.agent_block_i.sequencer_i);
 				`endif
 				phase.drop_objection(this);
 		endtask: run_phase

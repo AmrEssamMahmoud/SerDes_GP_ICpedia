@@ -1,5 +1,5 @@
 import enums::*;
-interface top_if (BitCLK, BitCLK_10);
+interface serdes_top_if (BitCLK, BitCLK_10);
     input BitCLK, BitCLK_10;
     bit Reset;
     bit TxDataK, RxDataK, Decode_Error, Disparity_Error;

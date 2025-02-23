@@ -1,19 +1,19 @@
-package driver_top;
+package driver_serdes_top;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-    import sequence_item_top ::*;
+    import sequence_item_serdes_top ::*;
     import enums ::*;
-    class driver_top extends uvm_driver #(sequence_item_top);
-        `uvm_component_utils(driver_top)
+    class driver_serdes_top extends uvm_driver #(sequence_item_serdes_top);
+        `uvm_component_utils(driver_serdes_top)
     
-        virtual top_if vif;
+        virtual serdes_top_if vif;
     
         function new(string name, uvm_component parent);
             super.new(name, parent);
         endfunction : new
 
         function void connect_phase(uvm_phase phase);
-            if (!uvm_config_db#(virtual top_if)::get(this,"","top_if", vif))
+            if (!uvm_config_db#(virtual serdes_top_if)::get(this,"","serdes_top_if", vif))
                 `uvm_error("NOVIF",{"virtual interface must be set for: ",get_full_name(),".vif"})
         endfunction: connect_phase
 
@@ -33,7 +33,7 @@ package driver_top;
             end
         endtask : run_phase
 
-        virtual task drive_item(sequence_item_top rhs);
+        virtual task drive_item(sequence_item_serdes_top rhs);
             vif.TxDataK = rhs.tx_data_k;
             vif.TxParallel_8 = rhs.input_data;
             @(negedge vif.BitCLK_10);

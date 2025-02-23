@@ -1,7 +1,9 @@
-package sequencer_block;
+package sequencer;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-    `ifdef ENCODER
+    `ifdef SERDES_TOP
+        import sequence_item_serdes_top::*;
+    `elsif ENCODER
         import sequence_item_encoder::*;
     `elsif PISO
         import sequence_item_piso::*;
@@ -13,8 +15,10 @@ package sequencer_block;
         import sequence_item_cdr::*;
     `endif
 
-    class sequencer_block extends uvm_sequencer #(
-        `ifdef ENCODER
+    class sequencer extends uvm_sequencer #(
+        `ifdef SERDES_TOP
+            sequence_item_serdes_top
+        `elsif ENCODER
             sequence_item_encoder
         `elsif PISO
             sequence_item_piso
@@ -26,7 +30,7 @@ package sequencer_block;
             sequence_item_cdr
         `endif
     );
-        `uvm_component_utils(sequencer_block)
+        `uvm_component_utils(sequencer)
 
         function new(string name, uvm_component parent);
             super.new(name, parent);

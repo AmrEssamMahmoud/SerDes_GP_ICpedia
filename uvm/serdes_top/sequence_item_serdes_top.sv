@@ -1,10 +1,10 @@
-package sequence_item_top;
+package sequence_item_serdes_top;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
     import enums::*;
     
-    class sequence_item_top extends uvm_sequence_item ;
-        `uvm_object_utils (sequence_item_top)
+    class sequence_item_serdes_top extends uvm_sequence_item ;
+        `uvm_object_utils (sequence_item_serdes_top)
 
         rand data_symbol input_data;
         rand bit tx_data_k;
@@ -16,7 +16,7 @@ package sequence_item_top;
 			symbols: coverpoint input_data;
 		endgroup
 
-        function new (string name = "sequence_item_top");
+        function new (string name = "sequence_item_serdes_top");
             super.new(name);
             input_coverage = new();
         endfunction : new
