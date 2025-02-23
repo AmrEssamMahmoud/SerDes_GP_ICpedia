@@ -2,7 +2,10 @@ package test;
 	import uvm_pkg::*;
 	`include "uvm_macros.svh"
 	import env::*;
-	`ifdef SERDES_TOP
+	`ifdef CDR_TOP
+		import sequence_item_cdr_top::*;
+		import sequence_cdr_top::*;
+    `elsif SERDES_TOP
 		import sequence_item_serdes_top::*;
 		import sequence_serdes_top::*;
     `elsif ENCODER
@@ -27,7 +30,9 @@ package test;
 		`uvm_component_utils(test)						
 		
 		env env_i;
-		`ifdef SERDES_TOP
+		`ifdef CDR_TOP
+			sequence_cdr_top sequence_i;
+		`elsif SERDES_TOP
 			sequence_serdes_top sequence_i;
 		`elsif ENCODER
 			sequence_encoder sequence_i;
@@ -48,7 +53,9 @@ package test;
 		virtual function void build_phase(uvm_phase phase);
 			super.build_phase(phase);
 			env_i = env::type_id::create("env_i", this);		
-			`ifdef SERDES_TOP
+			`ifdef CDR_TOP
+				sequence_i = sequence_cdr_top::type_id::create("sequence_i",this);
+			`elsif SERDES_TOP
 				sequence_i = sequence_serdes_top::type_id::create("sequence_i",this);
 			`elsif ENCODER
 				sequence_i = sequence_encoder::type_id::create("sequence_i",this);
@@ -70,7 +77,9 @@ package test;
 
 		virtual task run_phase(uvm_phase phase);
 				phase.raise_objection(this);
-				`ifdef SERDES_TOP
+				`ifdef CDR_TOP
+					sequence_i.start(env_i.agent_cdr_top_in_i.sequencer_i);
+				`elsif SERDES_TOP
 					sequence_i.start(env_i.agent_serdes_top_in_i.sequencer_i);
 				`else
 					sequence_i.start(env_i.agent_block_i.sequencer_i);

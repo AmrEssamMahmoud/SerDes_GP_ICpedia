@@ -1,11 +1,14 @@
 
 #Change this variable to one of the following values
-#SERDES_TOP ENCODER PISO SIPO DECODER
-set design_block SERDES_TOP
+#CDR_TOP SERDES_TOP ENCODER PISO SIPO DECODER CDR
+set design_block CDR_TOP
 
 set design_block_if [string cat [string tolower $design_block] _if]
 set path top
 switch $design_block {
+    CDR_TOP {
+        set path cdr_top
+    }
     SERDES_TOP {
         set path serdes_top
     }

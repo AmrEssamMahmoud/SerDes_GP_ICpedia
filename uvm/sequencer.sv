@@ -1,7 +1,9 @@
 package sequencer;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-    `ifdef SERDES_TOP
+    `ifdef CDR_TOP
+        import sequence_item_cdr_top::*;
+    `elsif SERDES_TOP
         import sequence_item_serdes_top::*;
     `elsif ENCODER
         import sequence_item_encoder::*;
@@ -16,7 +18,9 @@ package sequencer;
     `endif
 
     class sequencer extends uvm_sequencer #(
-        `ifdef SERDES_TOP
+        `ifdef CDR_TOP
+            sequence_item_cdr_top
+        `elsif SERDES_TOP
             sequence_item_serdes_top
         `elsif ENCODER
             sequence_item_encoder
