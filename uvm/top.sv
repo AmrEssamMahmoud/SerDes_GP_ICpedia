@@ -1,4 +1,4 @@
-`timescale 100fs/100fs
+`timescale 1ps/10fs
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 import test::*;
@@ -7,31 +7,41 @@ module top();
 
     `ifdef CDR_TOP
         bit TxBitCLK, TxBitCLK_10, RxBitCLK, RxBitCLK_10, clk;
-        parameter time_precision = 1000;
+        
+        // delay = (ppm / 1e6) * (UI time period / simulation time unit)
+        // delay = (ppm / 1e6) * (200 ps / 1 ps) = ppm * 2e-4
+        parameter ppm = 0;
+        parameter delay = ppm * (2e-4);
+        parameter max_delay = 200 * (2e-4);
     
         initial begin
+            $timeformat(-12, 2, " ps");
             forever begin
-                #1 clk = ~clk;
+                #0.1 clk = ~clk;
+            end
+        end
+        initial begin
+            // #
+            forever begin
+                #(10*delay);
+                #(10*(100-max_delay)) TxBitCLK_10 = ~TxBitCLK_10;
+            end
+        end
+        initial begin
+            // #
+            forever begin
+                #(delay);
+                #(100-max_delay) TxBitCLK = ~TxBitCLK;
             end
         end
         initial begin
             forever begin
-                #(10*time_precision) TxBitCLK_10 = ~TxBitCLK_10;
+                #1000 RxBitCLK_10 = ~RxBitCLK_10;
             end
         end
         initial begin
             forever begin
-                #(10*time_precision) RxBitCLK_10 = ~RxBitCLK_10;
-            end
-        end
-        initial begin
-            forever begin
-                #time_precision TxBitCLK = ~TxBitCLK;
-            end
-        end
-        initial begin
-            forever begin
-                #time_precision RxBitCLK = ~RxBitCLK;
+                #100 RxBitCLK = ~RxBitCLK;
             end
         end
     `else
@@ -68,7 +78,7 @@ module top();
             .RxParallel_8(cdr_top_if.RxParallel_8[7:0]),
             .phase_shift(cdr_top_if.phase_shift)
         );
-        phase_interpolator #(time_precision) phase_interpolator (
+        phase_interpolator phase_interpolator (
             .clk(clk),
             .data_clock(cdr_top_if.data_clock),
             .phase_clock(cdr_top_if.phase_clock),

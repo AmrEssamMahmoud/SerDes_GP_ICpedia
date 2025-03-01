@@ -1,6 +1,4 @@
-`timescale 100fs/100fs
-
-module phase_interpolator #(time_precision = 100) (
+module phase_interpolator (
     input logic        clk,
     input logic [8:0]  phase_shift,
     output logic       data_clock,
@@ -12,12 +10,17 @@ module phase_interpolator #(time_precision = 100) (
     real gain;
     real interp_output;
     real sine_wave_out; //for checking
+    real frequency = 5e9;
+    real current_time;
 
     always @(posedge clk) begin
-        sine_wave[0] = $sin(pi*$time/time_precision);          // phase 0
-        sine_wave[1] = $sin(pi*$time/time_precision + pi/2);     // phase 90
-        sine_wave[2] = $sin(pi*$time/time_precision + pi);    // phase pi
-        sine_wave[3] = $sin(pi*$time/time_precision + 3 * pi / 2);    // phase 270
+
+        current_time = $time * 10e-15;
+
+        sine_wave[0] = $sin(2*pi*frequency*current_time);          // phase 0
+        sine_wave[1] = $sin(2*pi*frequency*current_time + pi/2);     // phase 90
+        sine_wave[2] = $sin(2*pi*frequency*current_time + pi);    // phase pi
+        sine_wave[3] = $sin(2*pi*frequency*current_time + 3 * pi / 2);    // phase 270
         
         gain = phase_shift[6:0] / 128.0;
         
@@ -27,8 +30,8 @@ module phase_interpolator #(time_precision = 100) (
             2'b10: interp_output = (1-gain) * sine_wave[2] + gain * sine_wave[3];
             2'b11: interp_output = (1-gain) * sine_wave[3] + gain * sine_wave[0];
         endcase
-        
-        #time_precision recovered_clock = (interp_output >= 0) ? 1 : 0;
+
+        recovered_clock = (interp_output >= 0) ? 1 : 0;
     end
 
     always @(posedge recovered_clock) begin

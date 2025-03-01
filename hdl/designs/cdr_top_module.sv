@@ -1,5 +1,3 @@
-`timescale 100fs/100fs
-
 module cdr_top_module (
     input TxBitCLK, RxBitCLK,
     input TxBitCLK_10, RxBitCLK_10,

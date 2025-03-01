@@ -38,7 +38,7 @@ package scoreboard_cdr_top;
                 correct_count ++;
             end 
             else begin
-                `uvm_error(get_type_name(), $sformatf("test_failed_input_data = %d but output data = %d ",enc_packet.input_data.name ,packet.output_data.name))
+                // `uvm_error(get_type_name(), $sformatf("test_failed_input_data = %d but output data = %d ",enc_packet.input_data.name ,packet.output_data.name))
                 error_count ++;
             end
             dec_packets++;
