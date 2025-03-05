@@ -39,6 +39,8 @@ package agent_cdr_top;
         `uvm_component_utils(agent_cdr_top_out)
 
         monitor_cdr_top_out monitor_cdr_top_out_i;
+        monitor_cdr_top_tx_clock monitor_cdr_top_tx_clock_i;
+        monitor_cdr_top_rx_clock monitor_cdr_top_rx_clock_i;
     
         function new (string name, uvm_component parent);
             super.new(name, parent);
@@ -47,6 +49,8 @@ package agent_cdr_top;
         function void build_phase(uvm_phase phase);
             super.build_phase(phase);
             monitor_cdr_top_out_i = monitor_cdr_top_out::type_id::create("monitor_cdr_top_out_i", this);        
+            monitor_cdr_top_tx_clock_i = monitor_cdr_top_tx_clock::type_id::create("monitor_cdr_top_tx_clock_i", this);        
+            monitor_cdr_top_rx_clock_i = monitor_cdr_top_rx_clock::type_id::create("monitor_cdr_top_rx_clock_i", this);        
         endfunction
     
         function void start_of_simulation_phase(uvm_phase phase);

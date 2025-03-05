@@ -8,29 +8,32 @@ module top();
     `ifdef CDR_TOP
         bit TxBitCLK, TxBitCLK_10, RxBitCLK, RxBitCLK_10, clk;
         
+        parameter phase = 0;
+        parameter ppm = 0;
+
+        parameter phase_delay = 200 * phase / 360;
+        parameter max_delay = 500 * (1e-4);
+        parameter freq_delay = max_delay - (ppm * 1e-4);
         // delay = (ppm / 1e6) * (UI time period / simulation time unit)
         // delay = (ppm / 1e6) * (200 ps / 1 ps) = ppm * 2e-4
-        parameter ppm = 0;
-        parameter delay = ppm * (2e-4);
-        parameter max_delay = 200 * (2e-4);
     
         initial begin
             $timeformat(-12, 2, " ps");
             forever begin
-                #0.1 clk = ~clk;
+                #0.05 clk = ~clk;
             end
         end
         initial begin
-            // #
+            #(200+phase_delay);
             forever begin
-                #(10*delay);
+                #(10*freq_delay);
                 #(10*(100-max_delay)) TxBitCLK_10 = ~TxBitCLK_10;
             end
         end
         initial begin
-            // #
+            #(200+phase_delay);
             forever begin
-                #(delay);
+                #(freq_delay);
                 #(100-max_delay) TxBitCLK = ~TxBitCLK;
             end
         end
@@ -64,8 +67,8 @@ module top();
         cdr_top_module cdr_top_module (
             .TxBitCLK(TxBitCLK),
             .TxBitCLK_10(TxBitCLK_10),
-            .RxBitCLK(RxBitCLK),
-            .RxBitCLK_10(RxBitCLK_10),
+            .RxBitCLK(TxBitCLK),
+            .RxBitCLK_10(TxBitCLK_10),
             .Reset(cdr_top_if.Reset),
             .TxDataK(cdr_top_if.TxDataK),
             .TxParallel_8(cdr_top_if.TxParallel_8[7:0]),

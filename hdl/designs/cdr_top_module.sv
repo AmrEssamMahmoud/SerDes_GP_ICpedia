@@ -19,7 +19,7 @@ module cdr_top_module (
 
     reg [3:0] counter;
     wire recovered_clock_10;
-    assign recovered_clock_10 = recovered_clock == 1 ? 1 : 0;
+    assign recovered_clock_10 = counter < 5 ? 1 : 0;
     
     encoder encoder(.BitCLK_10(TxBitCLK_10), .Reset(Reset), .TxParallel_8(TxParallel_8), .TxDataK(TxDataK), .TxParallel_10(TxParallel_10));
     PISO PISO(.BitCLK(TxBitCLK), .Reset(Reset), .Serial(Serial), .TxParallel_10(TxParallel_10));
@@ -32,7 +32,10 @@ module cdr_top_module (
         if (!Reset) begin
             counter <= 0;
         end else begin
-            counter <= counter + 1;
+            if (counter == 9)
+                counter <= 0;
+            else
+                counter <= counter + 1;
         end
     end
 

@@ -34,4 +34,12 @@ package sequence_item_cdr_top;
         endfunction
 
     endclass
+
+    class sequence_item_cdr_clock extends uvm_sequence_item;
+        `uvm_object_utils (sequence_item_cdr_clock)
+
+        real time_sample;
+
+    endclass
+
 endpackage

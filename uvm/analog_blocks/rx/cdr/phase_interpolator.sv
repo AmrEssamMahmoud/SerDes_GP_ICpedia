@@ -12,6 +12,8 @@ module phase_interpolator (
     real sine_wave_out; //for checking
     real frequency = 5e9;
     real current_time;
+    int count = 0;
+    logic recovered_clock_temp;
 
     always @(posedge clk) begin
 
@@ -31,7 +33,15 @@ module phase_interpolator (
             2'b11: interp_output = (1-gain) * sine_wave[3] + gain * sine_wave[0];
         endcase
 
-        recovered_clock = (interp_output >= 0) ? 1 : 0;
+        recovered_clock_temp = (interp_output >= 0) ? 1 : 0;
+        count = count + 1;
+    end
+
+    always @(recovered_clock_temp) begin
+        if (count > 20) begin
+            recovered_clock = recovered_clock_temp;
+            count = 0;
+        end
     end
 
     always @(posedge recovered_clock) begin
@@ -45,7 +55,7 @@ module phase_interpolator (
     initial begin
         data_clock = 0;
         phase_clock = 0;
-        recovered_clock = 0;
+        recovered_clock = 1;
     end
 
 endmodule

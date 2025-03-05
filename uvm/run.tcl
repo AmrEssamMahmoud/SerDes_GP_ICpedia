@@ -28,12 +28,17 @@ switch $design_block {
         set path rx/cdr
     }
 }
-vlog -f $path/runfiles.f +define+$design_block +cover
+vlog +acc -f $path/runfiles.f +define+$design_block +cover
 
 vsim -voptargs=+acc -voptargs="+cover=bcefst" work.top -cover -classdebug +UVM_TESTNAME=test +UVM_VERBOSITY=UVM_HIGH -sv_seed 1
 
 add wave /top/$design_block_if/*
 switch $design_block {
+    CDR_TOP {
+        run 100fs
+        add wave /uvm_root/uvm_test_top/env_i/scoreboard_cdr_top_i/phase
+        add wave /uvm_root/uvm_test_top/env_i/scoreboard_cdr_top_i/ppm
+    }
     ENCODER {
         add wave /top/encoder/assertions_encoder_i/five_consecutive_bits_assert
         add wave /top/encoder/assertions_encoder_i/five_consecutive_bits_cover

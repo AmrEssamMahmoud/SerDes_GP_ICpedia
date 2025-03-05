@@ -96,6 +96,8 @@ package env;
         `ifdef CDR_TOP
             agent_cdr_top_in_i.monitor_cdr_top_in_i.item_collected_port.connect(scoreboard_cdr_top_i.scoreboard_top_in);
             agent_cdr_top_out_i.monitor_cdr_top_out_i.item_collected_port.connect(scoreboard_cdr_top_i.scoreboard_top_out);
+            agent_cdr_top_out_i.monitor_cdr_top_tx_clock_i.item_collected_port.connect(scoreboard_cdr_top_i.scoreboard_top_cdr_tx_clock);
+            agent_cdr_top_out_i.monitor_cdr_top_rx_clock_i.item_collected_port.connect(scoreboard_cdr_top_i.scoreboard_top_cdr_rx_clock);
         `elsif SERDES_TOP
             agent_serdes_top_in_i.monitor_serdes_top_in_i.item_collected_port.connect(scoreboard_serdes_top_i.scoreboard_top_in);
             agent_serdes_top_out_i.monitor_serdes_top_out_i.item_collected_port.connect(scoreboard_serdes_top_i.scoreboard_top_out);
