@@ -5,8 +5,11 @@ import test::*;
 
 module top();
 
+    bit TxBitCLK, TxBitCLK_10;
+    bit RxBitCLK, RxBitCLK_10;
+
     `ifdef CDR_TOP
-        bit TxBitCLK, TxBitCLK_10, RxBitCLK, RxBitCLK_10, clk;
+        bit clk;
         
         parameter phase = 0;
         parameter ppm = 0;
@@ -23,46 +26,63 @@ module top();
                 #0.05 clk = ~clk;
             end
         end
-        initial begin
-            #(200+phase_delay);
-            forever begin
-                #(10*freq_delay);
-                #(10*(100-max_delay)) TxBitCLK_10 = ~TxBitCLK_10;
-            end
-        end
-        initial begin
-            #(200+phase_delay);
-            forever begin
-                #(freq_delay);
-                #(100-max_delay) TxBitCLK = ~TxBitCLK;
-            end
-        end
-        initial begin
-            forever begin
-                #1000 RxBitCLK_10 = ~RxBitCLK_10;
-            end
-        end
-        initial begin
-            forever begin
-                #100 RxBitCLK = ~RxBitCLK;
-            end
-        end
     `else
-        bit BitCLK_10, BitCLK;
-
-        initial begin
-            forever begin
-                #10 BitCLK_10 = ~BitCLK_10;
-            end
-        end
-        initial begin
-            forever begin
-                #1 BitCLK = ~BitCLK;
-            end
-        end
+        parameter phase_delay = 0;
+        parameter max_delay = 0;
+        parameter freq_delay = 0;
     `endif
 
-    `ifdef CDR_TOP
+    initial begin
+        #(200+phase_delay);
+        forever begin
+            #(10*freq_delay);
+            #(10*(100-max_delay)) TxBitCLK_10 = ~TxBitCLK_10;
+        end
+    end
+    initial begin
+        #(200+phase_delay);
+        forever begin
+            #(freq_delay);
+            #(100-max_delay) TxBitCLK = ~TxBitCLK;
+        end
+    end
+    initial begin
+        forever begin
+            #1000 RxBitCLK_10 = ~RxBitCLK_10;
+        end
+    end
+    initial begin
+        forever begin
+            #100 RxBitCLK = ~RxBitCLK;
+        end
+    end
+
+    `ifdef EQUALIZATION_TOP
+        bit serial_internal;
+        equalization_top_if equalization_top_if (TxBitCLK, TxBitCLK_10);
+        equalization_top_module equalization_top_module (
+            .BitCLK(TxBitCLK),
+            .BitCLK_10(TxBitCLK_10),
+            .Reset(equalization_top_if.Reset),
+            .TxDataK(equalization_top_if.TxDataK),
+            .Serial_in(equalization_top_if.Serial_in),
+            .TxParallel_8(equalization_top_if.TxParallel_8[7:0]),
+            .RxDataK(equalization_top_if.RxDataK),
+            .Serial_out(equalization_top_if.Serial_out),
+            .Decode_Error(equalization_top_if.Decode_Error),
+            .Disparity_Error(equalization_top_if.Disparity_Error),
+            .RxParallel_8(equalization_top_if.RxParallel_8[7:0])
+        );
+        equalizer equalizer (
+            .in(equalization_top_if.Serial_out),
+            .out(serial_internal)
+        );
+        channel channel (
+            .in(serial_internal),
+            .out(equalization_top_if.Serial_in)
+        );
+        bind equalization_top_module assertions_equalization_top assertions_equalization_top_i(equalization_top_if.DUT);
+    `elsif CDR_TOP
         cdr_top_if cdr_top_if (TxBitCLK, TxBitCLK_10, RxBitCLK, RxBitCLK_10);
         cdr_top_module cdr_top_module (
             .TxBitCLK(TxBitCLK),
@@ -164,7 +184,9 @@ module top();
     `endif
 
     initial begin
-        `ifdef CDR_TOP
+        `ifdef EQUALIZATION_TOP
+            uvm_config_db #(virtual equalization_top_if)::set(null, "*", "equalization_top_if", equalization_top_if);
+        `elsif CDR_TOP
             uvm_config_db #(virtual cdr_top_if)::set(null, "*", "cdr_top_if", cdr_top_if);
         `elsif SERDES_TOP
             uvm_config_db #(virtual serdes_top_if)::set(null, "*", "serdes_top_if", serdes_top_if);

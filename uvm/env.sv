@@ -2,7 +2,9 @@ package env;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
-    `ifdef CDR_TOP
+    `ifdef EQUALIZATION_TOP
+        import agent_equalization_top::*;
+    `elsif CDR_TOP
         import agent_cdr_top::*;
     `elsif SERDES_TOP
         import agent_serdes_top::*;
@@ -10,7 +12,9 @@ package env;
         import agent_block::*;
     `endif
 
-    `ifdef CDR_TOP
+    `ifdef EQUALIZATION_TOP
+        import scoreboard_equalization_top::*;
+    `elsif CDR_TOP
         import scoreboard_cdr_top::*;
     `elsif SERDES_TOP
         import scoreboard_serdes_top::*;
@@ -30,7 +34,10 @@ package env;
     class env extends uvm_env;
         `uvm_component_utils(env)
         
-        `ifdef CDR_TOP
+        `ifdef EQUALIZATION_TOP
+            agent_equalization_top_in agent_equalization_top_in_i;
+            agent_equalization_top_out agent_equalization_top_out_i;
+        `elsif CDR_TOP
             agent_cdr_top_in agent_cdr_top_in_i;
             agent_cdr_top_out agent_cdr_top_out_i;
         `elsif SERDES_TOP
@@ -40,7 +47,9 @@ package env;
             agent_block agent_block_i;
         `endif
         
-        `ifdef CDR_TOP
+        `ifdef EQUALIZATION_TOP
+            scoreboard_equalization_top scoreboard_equalization_top_i;
+        `elsif CDR_TOP
             scoreboard_cdr_top scoreboard_cdr_top_i;
         `elsif SERDES_TOP
             scoreboard_serdes_top scoreboard_serdes_top_i;
@@ -64,7 +73,10 @@ package env;
         function void build_phase(uvm_phase phase);
             super.build_phase(phase);
 
-            `ifdef CDR_TOP
+            `ifdef EQUALIZATION_TOP
+                agent_equalization_top_in_i = agent_equalization_top_in::type_id::create("agent_equalization_top_in_i", this);
+                agent_equalization_top_out_i = agent_equalization_top_out::type_id::create("agent_equalization_top_out_i", this);
+            `elsif CDR_TOP
                 agent_cdr_top_in_i = agent_cdr_top_in::type_id::create("agent_cdr_top_in_i", this);
                 agent_cdr_top_out_i = agent_cdr_top_out::type_id::create("agent_cdr_top_out_i", this);
             `elsif SERDES_TOP
@@ -74,7 +86,9 @@ package env;
                 agent_block_i = agent_block::type_id::create("agent_block_i", this);
             `endif
 
-            `ifdef CDR_TOP
+            `ifdef EQUALIZATION_TOP
+                scoreboard_equalization_top_i = scoreboard_equalization_top::type_id::create("scoreboard_equalization_top_i", this);            
+            `elsif CDR_TOP
                 scoreboard_cdr_top_i = scoreboard_cdr_top::type_id::create("scoreboard_cdr_top_i", this);            
             `elsif SERDES_TOP
                 scoreboard_serdes_top_i = scoreboard_serdes_top::type_id::create("scoreboard_serdes_top_i", this);            
@@ -93,7 +107,10 @@ package env;
         endfunction : build_phase
 
         function void connect_phase(uvm_phase phase);
-        `ifdef CDR_TOP
+        `ifdef EQUALIZATION_TOP
+            agent_equalization_top_in_i.monitor_equalization_top_in_i.item_collected_port.connect(scoreboard_equalization_top_i.scoreboard_top_in);
+            agent_equalization_top_out_i.monitor_equalization_top_out_i.item_collected_port.connect(scoreboard_equalization_top_i.scoreboard_top_out);
+        `elsif CDR_TOP
             agent_cdr_top_in_i.monitor_cdr_top_in_i.item_collected_port.connect(scoreboard_cdr_top_i.scoreboard_top_in);
             agent_cdr_top_out_i.monitor_cdr_top_out_i.item_collected_port.connect(scoreboard_cdr_top_i.scoreboard_top_out);
             agent_cdr_top_out_i.monitor_cdr_top_tx_clock_i.item_collected_port.connect(scoreboard_cdr_top_i.scoreboard_top_cdr_tx_clock);

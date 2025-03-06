@@ -1,31 +1,34 @@
 
 #Change this variable to one of the following values
-#CDR_TOP SERDES_TOP ENCODER PISO SIPO DECODER CDR
+#EQUALIZATION_TOP CDR_TOP SERDES_TOP ENCODER PISO SIPO DECODER CDR
 set design_block CDR_TOP
 
 set design_block_if [string cat [string tolower $design_block] _if]
 set path top
 switch $design_block {
+    EQUALIZATION_TOP {
+        set path integration_testing/equalization_top
+    }
     CDR_TOP {
-        set path cdr_top
+        set path integration_testing/cdr_top
     }
     SERDES_TOP {
-        set path serdes_top
+        set path integration_testing/serdes_top
     }
     ENCODER {
-        set path tx/encoder
+        set path unit_testing/tx/encoder
     }
     PISO {
-        set path tx/piso
+        set path unit_testing/tx/piso
     }
     SIPO {
-        set path rx/sipo
+        set path unit_testing/rx/sipo
     }
     DECODER {
-        set path rx/decoder
+        set path unit_testing/rx/decoder
     }
     CDR {
-        set path rx/cdr
+        set path unit_testing/rx/cdr
     }
 }
 vlog +acc -f $path/runfiles.f +define+$design_block +cover

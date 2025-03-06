@@ -13,17 +13,17 @@ analog_blocks/rx/cdr/phase_interpolator.sv
 
 //interface
 enums_pkg.sv
-cdr_top/cdr_top_if.sv
-cdr_top/assertions_cdr_top.sv
+integration_testing/cdr_top/cdr_top_if.sv
+integration_testing/cdr_top/assertions_cdr_top.sv
 
 //UVM
-cdr_top/sequence_item_cdr_top.sv
-cdr_top/sequence_cdr_top.sv
+integration_testing/cdr_top/sequence_item_cdr_top.sv
+integration_testing/cdr_top/sequence_cdr_top.sv
 sequencer.sv
-cdr_top/driver_cdr_top.sv
-cdr_top/monitor_cdr_top.sv
-cdr_top/agent_cdr_top.sv
-cdr_top/scoreboard_cdr_top.sv
+integration_testing/cdr_top/driver_cdr_top.sv
+integration_testing/cdr_top/monitor_cdr_top.sv
+integration_testing/cdr_top/agent_cdr_top.sv
+integration_testing/cdr_top/scoreboard_cdr_top.sv
 env.sv
 test.sv
 top.sv

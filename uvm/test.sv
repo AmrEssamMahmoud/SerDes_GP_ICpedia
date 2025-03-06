@@ -2,7 +2,10 @@ package test;
 	import uvm_pkg::*;
 	`include "uvm_macros.svh"
 	import env::*;
-	`ifdef CDR_TOP
+	`ifdef EQUALIZATION_TOP
+		import sequence_item_equalization_top::*;
+		import sequence_equalization_top::*;
+    `elsif CDR_TOP
 		import sequence_item_cdr_top::*;
 		import sequence_cdr_top::*;
     `elsif SERDES_TOP
@@ -30,7 +33,9 @@ package test;
 		`uvm_component_utils(test)						
 		
 		env env_i;
-		`ifdef CDR_TOP
+		`ifdef EQUALIZATION_TOP
+			sequence_equalization_top sequence_i;
+		`elsif CDR_TOP
 			sequence_cdr_top sequence_i;
 		`elsif SERDES_TOP
 			sequence_serdes_top sequence_i;
@@ -53,7 +58,9 @@ package test;
 		virtual function void build_phase(uvm_phase phase);
 			super.build_phase(phase);
 			env_i = env::type_id::create("env_i", this);		
-			`ifdef CDR_TOP
+			`ifdef EQUALIZATION_TOP
+				sequence_i = sequence_equalization_top::type_id::create("sequence_i",this);
+			`elsif CDR_TOP
 				sequence_i = sequence_cdr_top::type_id::create("sequence_i",this);
 			`elsif SERDES_TOP
 				sequence_i = sequence_serdes_top::type_id::create("sequence_i",this);
@@ -77,7 +84,9 @@ package test;
 
 		virtual task run_phase(uvm_phase phase);
 				phase.raise_objection(this);
-				`ifdef CDR_TOP
+				`ifdef EQUALIZATION_TOP
+					sequence_i.start(env_i.agent_equalization_top_in_i.sequencer_i);
+				`elsif CDR_TOP
 					sequence_i.start(env_i.agent_cdr_top_in_i.sequencer_i);
 				`elsif SERDES_TOP
 					sequence_i.start(env_i.agent_serdes_top_in_i.sequencer_i);
