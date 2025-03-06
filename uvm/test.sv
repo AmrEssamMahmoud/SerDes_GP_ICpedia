@@ -26,6 +26,9 @@ package test;
 	`elsif CDR
 		import sequence_item_cdr::*;
 		import sequence_cdr::*;
+    `elsif EQUALIZATION
+		import sequence_item_equalization::*;
+		import sequence_equalization::*;
     `endif
 
 
@@ -49,6 +52,8 @@ package test;
 			sequence_decoder sequence_i;
 		`elsif CDR
 			sequence_cdr sequence_i;
+		`elsif EQUALIZATION
+			sequence_equalization sequence_i;
 		`endif
 
 		function new(input string name = "test", uvm_component parent = null);
@@ -74,6 +79,8 @@ package test;
 				sequence_i = sequence_decoder::type_id::create("sequence_i",this);
 			`elsif CDR
 				sequence_i = sequence_cdr::type_id::create("sequence_i",this);
+			`elsif EQUALIZATION
+				sequence_i = sequence_equalization::type_id::create("sequence_i",this);
 			`endif
 		endfunction: build_phase
 

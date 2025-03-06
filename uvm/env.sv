@@ -29,6 +29,8 @@ package env;
         import scoreboard_decoder::*;
     `elsif CDR
         import scoreboard_cdr::*;
+    `elsif EQUALIZATION
+        import scoreboard_equalization::*;
     `endif
     
     class env extends uvm_env;
@@ -64,6 +66,8 @@ package env;
             scoreboard_decoder scoreboard_i;
         `elsif CDR
             scoreboard_cdr scoreboard_i;
+        `elsif EQUALIZATION
+            scoreboard_equalization scoreboard_i;
         `endif        
     
         function new(string name, uvm_component parent);
@@ -103,6 +107,8 @@ package env;
                 scoreboard_i = scoreboard_decoder::type_id::create("scoreboard_i", this);
             `elsif CDR
                 scoreboard_i = scoreboard_cdr::type_id::create("scoreboard_i", this);
+            `elsif EQUALIZATION
+                scoreboard_i = scoreboard_equalization::type_id::create("scoreboard_i", this);
             `endif
         endfunction : build_phase
 

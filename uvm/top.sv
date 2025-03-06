@@ -1,59 +1,82 @@
-`timescale 1ps/10fs
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 import test::*;
+`ifdef EQUALIZATION
+    `define EQUALIZATION_CLOCKS
+`elsif EQUALIZATION_TOP
+    `define EQUALIZATION_CLOCKS
+`endif
+
+`ifdef EQUALIZATION_CLOCKS
+    `timescale 10ps/10ps
+`elsif CDR_TOP
+    `timescale 1ps/10fs
+`else
+    `timescale 100ps/100ps
+`endif
 
 module top();
 
     bit TxBitCLK, TxBitCLK_10;
     bit RxBitCLK, RxBitCLK_10;
+    bit continous_clock;
 
-    `ifdef CDR_TOP
-        bit clk;
+    `ifdef EQUALIZATION_CLOCKS
+        parameter phase_delay = 0;
+        parameter tx_clk_delay = 10;
+        parameter rx_clk_delay = 10;
+
+        initial begin
+            forever begin
+                #1 continous_clock = ~continous_clock;
+            end
+        end
+    `elsif CDR_TOP
         
         parameter phase = 0;
         parameter ppm = 0;
 
-        parameter phase_delay = 200 * phase / 360;
+        parameter phase_delay = 200 + (200 * phase / 360);
         parameter max_delay = 500 * (1e-4);
-        parameter freq_delay = max_delay - (ppm * 1e-4);
+        parameter freq_delay = ppm * 1e-4;
         // delay = (ppm / 1e6) * (UI time period / simulation time unit)
         // delay = (ppm / 1e6) * (200 ps / 1 ps) = ppm * 2e-4
     
+        parameter tx_clk_delay = 100 - freq_delay;
+        parameter rx_clk_delay = 100;
+
         initial begin
-            $timeformat(-12, 2, " ps");
             forever begin
-                #0.05 clk = ~clk;
+                #0.05 continous_clock = ~continous_clock;
             end
         end
     `else
         parameter phase_delay = 0;
-        parameter max_delay = 0;
-        parameter freq_delay = 0;
+        parameter tx_clk_delay = 1;
+        parameter rx_clk_delay = 1;
     `endif
 
     initial begin
-        #(200+phase_delay);
+        $timeformat(-12, 2, " ps");
+        #(phase_delay);
         forever begin
-            #(10*freq_delay);
-            #(10*(100-max_delay)) TxBitCLK_10 = ~TxBitCLK_10;
+            #(10*tx_clk_delay) TxBitCLK_10 = ~TxBitCLK_10;
         end
     end
     initial begin
-        #(200+phase_delay);
+        #(phase_delay);
         forever begin
-            #(freq_delay);
-            #(100-max_delay) TxBitCLK = ~TxBitCLK;
-        end
-    end
-    initial begin
-        forever begin
-            #1000 RxBitCLK_10 = ~RxBitCLK_10;
+            #(tx_clk_delay) TxBitCLK = ~TxBitCLK;
         end
     end
     initial begin
         forever begin
-            #100 RxBitCLK = ~RxBitCLK;
+            #(10*rx_clk_delay) RxBitCLK_10 = ~RxBitCLK_10;
+        end
+    end
+    initial begin
+        forever begin
+            #(rx_clk_delay) RxBitCLK = ~RxBitCLK;
         end
     end
 
@@ -102,7 +125,7 @@ module top();
             .phase_shift(cdr_top_if.phase_shift)
         );
         phase_interpolator phase_interpolator (
-            .clk(clk),
+            .clk(continous_clock),
             .data_clock(cdr_top_if.data_clock),
             .phase_clock(cdr_top_if.phase_clock),
             .recovered_clock(cdr_top_if.recovered_clock),
@@ -180,7 +203,19 @@ module top();
             .gainsel(2'b0),
             .output_signal(cdr_if.phase_shift)
         );
-         bind loop_filter assertions_cdr assertions_cdr_i(cdr_if.DUT);
+        bind loop_filter assertions_cdr assertions_cdr_i(cdr_if.DUT);
+    `elsif EQUALIZATION
+        bit serial_internal;
+        equalization_if equalization_if (TxBitCLK);
+        equalizer equalizer (
+            .in(equalization_if.Serial_out),
+            .out(serial_internal)
+        );
+        channel channel (
+            .in(serial_internal),
+            .out(equalization_if.Serial_in)
+        );        
+        bind equalizer assertions_equalization assertions_equalization_i(equalization_if.DUT);
     `endif
 
     initial begin
@@ -200,6 +235,8 @@ module top();
             uvm_config_db #(virtual decoder_if)::set(null, "*", "decoder_if", decoder_if);
         `elsif CDR
             uvm_config_db #(virtual cdr_if)::set(null, "*", "cdr_if", cdr_if);
+        `elsif EQUALIZATION
+            uvm_config_db #(virtual equalization_if)::set(null, "*", "equalization_if", equalization_if);
         `endif
         run_test("test");
     end
