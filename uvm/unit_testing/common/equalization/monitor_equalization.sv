@@ -25,6 +25,8 @@ package monitor_equalization;
 
 		virtual task run_phase(uvm_phase phase);
 			super.run_phase(phase);
+			@(posedge vif.Reset)
+			@(negedge vif.BitCLK)
 			forever begin
 				sample_item();
 			end
@@ -32,7 +34,7 @@ package monitor_equalization;
 
 		virtual task sample_item();
 			sequence_item_equalization resp = sequence_item_equalization::type_id::create("resp");            
-			@(posedge vif.TxBitCLK);
+			@(negedge vif.BitCLK);
             //***************************//
             // TODO: Sample Outputs Here //
             //***************************//

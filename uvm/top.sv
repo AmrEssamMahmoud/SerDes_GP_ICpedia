@@ -81,7 +81,7 @@ module top();
     end
 
     `ifdef EQUALIZATION_TOP
-        bit serial_internal;
+        real channel_response;
         equalization_top_if equalization_top_if (TxBitCLK, TxBitCLK_10);
         equalization_top_module equalization_top_module (
             .BitCLK(TxBitCLK),
@@ -96,13 +96,15 @@ module top();
             .Disparity_Error(equalization_top_if.Disparity_Error),
             .RxParallel_8(equalization_top_if.RxParallel_8[7:0])
         );
-        equalizer equalizer (
-            .in(equalization_top_if.Serial_out),
-            .out(serial_internal)
-        );
         channel channel (
-            .in(serial_internal),
-            .out(equalization_top_if.Serial_in)
+            .clk(continous_clock),
+            .channel_in(equalization_top_if.Serial_out),
+            .channel_out(channel_response)
+        );
+        equalizer equalizer (
+            .clk(continous_clock),
+            .equalizer_in(channel_response),
+            .equalizer_out(equalization_top_if.Serial_in)
         );
         bind equalization_top_module assertions_equalization_top assertions_equalization_top_i(equalization_top_if.DUT);
     `elsif CDR_TOP
@@ -205,16 +207,18 @@ module top();
         );
         bind loop_filter assertions_cdr assertions_cdr_i(cdr_if.DUT);
     `elsif EQUALIZATION
-        bit serial_internal;
+        real channel_response;
         equalization_if equalization_if (TxBitCLK);
-        equalizer equalizer (
-            .in(equalization_if.Serial_out),
-            .out(serial_internal)
-        );
         channel channel (
-            .in(serial_internal),
-            .out(equalization_if.Serial_in)
-        );        
+            .clk(continous_clock),
+            .channel_in(equalization_if.Serial_out),
+            .channel_out(channel_response)
+        );
+        equalizer equalizer (
+            .clk(continous_clock),
+            .equalizer_in(channel_response),
+            .equalizer_out(equalization_if.Serial_in)
+        );
         bind equalizer assertions_equalization assertions_equalization_i(equalization_if.DUT);
     `endif
 

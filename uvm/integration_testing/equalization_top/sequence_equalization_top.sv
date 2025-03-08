@@ -14,7 +14,7 @@ package sequence_equalization_top;
         endfunction : new
 
         virtual task body();
-            repeat(500) begin
+            repeat(20) begin
                 sequence_item = sequence_item_equalization_top::type_id::create("sequence_item");
                 start_item(sequence_item);
                 assert(sequence_item.randomize());

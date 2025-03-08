@@ -20,7 +20,7 @@ package driver_equalization;
         task run_phase(uvm_phase phase);
             super.run_phase(phase);
             vif.Reset=0;
-            @(negedge vif.TxBitCLK);
+            @(negedge vif.BitCLK);
             vif.Reset=1;
             forever begin
                 seq_item_port.get_next_item(req);
@@ -30,7 +30,7 @@ package driver_equalization;
         endtask : run_phase
 
         virtual task drive_item(sequence_item_equalization rhs);
-            @(negedge vif.TxBitCLK);
+            @(negedge vif.BitCLK);
             //*************************//
             // TODO: Drive Inputs Here //
             //*************************//

@@ -1,7 +1,7 @@
 
 #Change this variable to one of the following values
 #EQUALIZATION_TOP CDR_TOP SERDES_TOP ENCODER PISO SIPO DECODER CDR EQUALIZATION
-set design_block CDR_TOP
+set design_block EQUALIZATION_TOP
 
 set design_block_if [string cat [string tolower $design_block] _if]
 set path top
@@ -44,6 +44,12 @@ switch $design_block {
         run 100fs
         add wave /uvm_root/uvm_test_top/env_i/scoreboard_cdr_top_i/phase
         add wave /uvm_root/uvm_test_top/env_i/scoreboard_cdr_top_i/ppm
+    }
+    EQUALIZATION_TOP {
+        add wave /top/channel_response
+    }
+    EQUALIZATION {
+        add wave /top/channel_response
     }
     ENCODER {
         add wave /top/encoder/assertions_encoder_i/five_consecutive_bits_assert
