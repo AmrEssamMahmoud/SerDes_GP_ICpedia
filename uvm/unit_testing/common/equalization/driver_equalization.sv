@@ -34,7 +34,7 @@ package driver_equalization;
             //*************************//
             // TODO: Drive Inputs Here //
             //*************************//
-            // example: vif.signal = rhs.signal;
+            vif.Serial_in = rhs.Serial_in;
         endtask : drive_item
 
     endclass

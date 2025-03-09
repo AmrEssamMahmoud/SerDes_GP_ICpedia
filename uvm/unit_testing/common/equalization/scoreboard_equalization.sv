@@ -22,6 +22,26 @@ package scoreboard_equalization;
             //**************************//
             // TODO: Check Results Here //
             //**************************//
+            // if (packet.Serial_out==packet.Serial_in)begin
+            //     correct_count++;
+            // end
+            // else begin
+            //     error_count++;
+            // end
+            equalization_q.push_back(packet);
+            if (equalization_q.size() > 1) begin
+                sequence_item_equalization old_packet = equalization_q.pop_front();
+            if (packet.Serial_in != old_packet.Serial_out) begin
+                error_count++;
+                `uvm_error(get_type_name(), $sformatf("Test Failed: input = %d but output = %d ", old_packet.Serial_in, packet.Serial_out))
+
+            end
+            else begin
+                correct_count++;
+                `uvm_info(get_type_name(), $sformatf("Test Pass: data received = %d", packet.Serial_out), UVM_LOW);
+                            end
+            end
+            
         endfunction 
 
         function void report_phase(uvm_phase phase);

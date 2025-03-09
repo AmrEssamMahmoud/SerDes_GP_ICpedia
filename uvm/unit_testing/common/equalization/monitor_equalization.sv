@@ -38,7 +38,8 @@ package monitor_equalization;
             //***************************//
             // TODO: Sample Outputs Here //
             //***************************//
-			// example: resp.signal = vif.signal
+			resp.Serial_out = vif.Serial_out;
+			resp.Serial_in=vif.Serial_in;
 			item_collected_port.write(resp);
 		endtask : sample_item
 
