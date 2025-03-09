@@ -9,8 +9,8 @@ package sequence_item_equalization;
         //***************************//
         // TODO: Define Signals Here //
         //***************************//
-        rand bit Serial_in;
-        bit Serial_out;
+        bit Serial_in;
+        rand bit Serial_out;
         bit Reset ;
 
         function new (string name = "sequence_item_equalization");
