@@ -33,17 +33,34 @@ module top();
         end
     `elsif CDR_TOP
         
-        parameter phase = 0;
-        parameter ppm = 0;
+        real phase = 0;
+        real ppm = 0;
 
-        parameter phase_delay = 200 + (200 * phase / 360);
-        parameter max_delay = 500 * (1e-4);
-        parameter freq_delay = ppm * 1e-4;
+        real phase_delay = 200 + (200 * phase / 360);
+    
         // delay = (ppm / 1e6) * (UI time period / simulation time unit)
         // delay = (ppm / 1e6) * (200 ps / 1 ps) = ppm * 2e-4
-    
-        parameter tx_clk_delay = 100 - freq_delay;
-        parameter rx_clk_delay = 100;
+        real tx_clk_delay = 100 - (ppm * 1e-4);
+        real rx_clk_delay = 100;
+
+        // bit inc_or_dec = 1;
+
+        // initial begin
+        //     forever begin
+        //         #(333333.33);
+        //         if (inc_or_dec) begin
+        //             ppm = ppm + 100;
+        //         end else begin
+        //             ppm = ppm - 100;
+        //         end
+        //         if (ppm == 5000) begin
+        //             inc_or_dec = 0;
+        //         end else if (ppm == 0) begin
+        //             inc_or_dec = 1;
+        //         end
+        //         tx_clk_delay = 100 - (ppm * 1e-4);
+        //     end
+        // end
 
         initial begin
             forever begin
@@ -106,7 +123,7 @@ module top();
         );
         bind equalization_top_module assertions_equalization_top assertions_equalization_top_i(equalization_top_if.DUT);
     `elsif CDR_TOP
-        cdr_top_if cdr_top_if (TxBitCLK, TxBitCLK_10, RxBitCLK, RxBitCLK_10);
+        cdr_top_if cdr_top_if (TxBitCLK, TxBitCLK_10, RxBitCLK, RxBitCLK_10, ppm);
         cdr_top_module cdr_top_module (
             .TxBitCLK(TxBitCLK),
             .TxBitCLK_10(TxBitCLK_10),

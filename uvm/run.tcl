@@ -43,7 +43,7 @@ switch $design_block {
     CDR_TOP {
         run 100fs
         add wave /uvm_root/uvm_test_top/env_i/scoreboard_cdr_top_i/phase
-        add wave /uvm_root/uvm_test_top/env_i/scoreboard_cdr_top_i/ppm
+        add wave /uvm_root/uvm_test_top/env_i/scoreboard_cdr_top_i/ppm_rx
     }
     ENCODER {
         add wave /top/encoder/assertions_encoder_i/five_consecutive_bits_assert

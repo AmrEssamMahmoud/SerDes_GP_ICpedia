@@ -39,6 +39,8 @@ package sequence_item_cdr_top;
         `uvm_object_utils (sequence_item_cdr_clock)
 
         real time_sample;
+        string edge_type;
+        real ppm;
 
     endclass
 

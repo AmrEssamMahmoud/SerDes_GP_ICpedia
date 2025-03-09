@@ -10,11 +10,16 @@ package scoreboard_cdr_top;
         int error_count;
         int enc_packets;
         int dec_packets;
-        int cycles_count = 0;
-        real start_time;
-        real phase;
+        int is_first_edge = 1;
+        real start_edge;
+        real half_period;
         real frequency;
-        real ppm;
+        real period;
+        real phase;
+        real ppm_rx;
+        real ppm_tx;
+        real ppm_difference;
+        sequence_item_cdr_clock start_packet;
 
         `uvm_analysis_imp_decl(_enc)
         `uvm_analysis_imp_decl(_dec)
@@ -28,8 +33,8 @@ package scoreboard_cdr_top;
         
         sequence_item_cdr_top enc_q[$];
         sequence_item_cdr_top dec_q[$];
-        sequence_item_cdr_clock tx_clock_q[$];
-        sequence_item_cdr_clock rx_clock_q[$];
+        sequence_item_cdr_clock clock_phase_q[$];
+        sequence_item_cdr_clock rx_clock_ppm_q[$];
 
         function new(string name="", uvm_component parent = null);
             super.new(name, parent);
@@ -40,32 +45,73 @@ package scoreboard_cdr_top;
         endfunction
 
         virtual function void write_tx_clock(sequence_item_cdr_clock packet);
-            if (rx_clock_q.size() > 0) begin
-                sequence_item_cdr_clock rx_packet = rx_clock_q.pop_front();
-                // `uvm_info(get_type_name(), $sformatf("tx sample = %0d | rx sample = %0d | phase = %0d", packet.time_sample, rx_packet.time_sample, phase), UVM_LOW)
-                phase = 360 * (packet.time_sample - rx_packet.time_sample) / 20000;
-            end else begin
-                tx_clock_q.push_back(packet);
-            end
+            ppm_tx = packet.ppm;
+            calculate_phase_difference(1, packet);
         endfunction
 
         virtual function void write_rx_clock(sequence_item_cdr_clock packet);
-            if (cycles_count == 0) begin
-                start_time = packet.time_sample;
-            end else begin
-                frequency = cycles_count * 100000 / (packet.time_sample - start_time);
-                ppm = (frequency - 5) * 1e6 / 5;
-            end
-            cycles_count = cycles_count + 1;
+            if (packet.edge_type == "posedge") begin
 
-            if (tx_clock_q.size() > 0) begin
-                sequence_item_cdr_clock tx_packet = tx_clock_q.pop_front();
-                // `uvm_info(get_type_name(), $sformatf("tx sample = %0d | rx sample = %0d | phase = %0d", tx_packet.time_sample, packet.time_sample, phase), UVM_LOW)
-                phase = 360 * (tx_packet.time_sample - packet.time_sample) / 20000;
-            end else begin
-                rx_clock_q.push_back(packet);
+                if (is_first_edge) begin
+                    start_packet = packet;
+                    is_first_edge = 0;
+                end else begin
+                    rx_clock_ppm_q.push_back(packet);
+                    if (rx_clock_ppm_q.size() > 300) begin
+                        start_packet = rx_clock_ppm_q.pop_front();
+                    end
+                    frequency = rx_clock_ppm_q.size() * 100000 / (packet.time_sample - start_packet.time_sample);
+                    ppm_rx = (frequency - 5) * 1e6 / 5;
+
+                    if ($realtime > 30000000) begin
+                        ppm_difference = (ppm_rx < ppm_tx) ? (ppm_tx - ppm_rx) : (ppm_rx - ppm_tx);
+                        if (ppm_difference > 15) begin
+                            `uvm_error(get_type_name(), $sformatf("Large ppm offset error: ppm_rx = %0f, ppm_tx = %0f", ppm_rx, ppm_tx))
+                            error_count ++;
+                        end
+                    end
+                end
+
             end
-        endfunction 
+
+            if (packet.edge_type == "posedge") begin
+                period = packet.time_sample - start_edge;
+                if (start_edge != 0) begin
+                    if (0.49 > (half_period / period) || (half_period / period) > 0.51) begin
+                        `uvm_error(get_type_name(), $sformatf("Pulse width error: the period width is %0f but the high pulse width is %0f", period, half_period))
+                        error_count ++;
+                    end
+                end
+                start_edge = packet.time_sample;
+            end else begin
+                half_period =  packet.time_sample - start_edge;
+            end
+            
+            if (packet.edge_type == "negedge") begin
+                calculate_phase_difference(-1, packet);
+            end
+        endfunction
+
+
+        task calculate_phase_difference (
+            input int sign,
+            input sequence_item_cdr_clock current_packet
+        );
+
+            if (clock_phase_q.size() > 0) begin
+                sequence_item_cdr_clock previous_packet = clock_phase_q.pop_front();
+                phase = 360 * sign * (current_packet.time_sample - previous_packet.time_sample) / 20000;
+                if ($realtime > 30000000) begin
+                    if (phase < -5 || 5 < phase) begin
+                        `uvm_error(get_type_name(), $sformatf("Phase lock error: phase differece = %0f", phase))
+                        error_count ++;
+                    end
+                end
+            end else begin
+                clock_phase_q.push_back(current_packet);
+            end
+
+        endtask
 
         virtual function void write_enc(sequence_item_cdr_top packet);
             enc_q.push_back(packet);

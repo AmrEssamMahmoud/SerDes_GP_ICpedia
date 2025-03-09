@@ -68,11 +68,11 @@ package monitor_cdr_top;
 		virtual task run_phase(uvm_phase phase);
 			super.run_phase(phase);
 			forever begin
-				@(negedge vif.RxBitCLK_10);
+				@(negedge vif.TxBitCLK_10);
 				if (vif.TxParallel_8 == S_28_5)
 					break;
 			end
-			repeat(3) @(posedge vif.RxBitCLK_10);
+			repeat(3) @(posedge vif.TxBitCLK_10);
 			forever begin
 				sample_item();
 			end
@@ -80,7 +80,7 @@ package monitor_cdr_top;
 
 		virtual task sample_item();
 			sequence_item_cdr_top resp = sequence_item_cdr_top::type_id::create("resp");
-			@(posedge vif.RxBitCLK_10);
+			@(posedge vif.TxBitCLK_10);
 			resp.output_data = vif.RxParallel_8;
 			resp.rx_data_k = vif.RxDataK;
 			item_collected_port.write(resp);
@@ -93,7 +93,6 @@ package monitor_cdr_top;
 
 		virtual cdr_top_if  vif;
 		uvm_analysis_port #(sequence_item_cdr_clock) item_collected_port;
-		sequence_item_cdr_clock resp;
 
 		function new(string name, uvm_component parent);
 			super.new(name, parent);
@@ -106,7 +105,6 @@ package monitor_cdr_top;
 
 		virtual function void build_phase(uvm_phase phase);
 			super.build_phase(phase);
-			resp = sequence_item_cdr_clock::type_id::create("resp");
 			item_collected_port = new("item_collected_port", this);
 		endfunction : build_phase
 
@@ -114,11 +112,18 @@ package monitor_cdr_top;
 			super.run_phase(phase);
 			@(negedge vif.TxBitCLK)
 			forever begin
-				@(posedge vif.TxBitCLK)
-				resp.time_sample = $realtime;
-				item_collected_port.write(resp);
+				sample_item();
 			end
 		endtask : run_phase
+
+		virtual task sample_item();
+			sequence_item_cdr_clock resp = sequence_item_cdr_clock::type_id::create("resp");
+			@(posedge vif.TxBitCLK)
+			resp.edge_type = "posedge";
+			resp.time_sample = $realtime;
+			resp.ppm = vif.ppm;
+			item_collected_port.write(resp);
+		endtask : sample_item
 
 	endclass
 
@@ -127,7 +132,6 @@ package monitor_cdr_top;
 
 		virtual cdr_top_if  vif;
 		uvm_analysis_port #(sequence_item_cdr_clock) item_collected_port;
-		sequence_item_cdr_clock resp;
 
 		function new(string name, uvm_component parent);
 			super.new(name, parent);
@@ -140,7 +144,6 @@ package monitor_cdr_top;
 
 		virtual function void build_phase(uvm_phase phase);
 			super.build_phase(phase);
-			resp = sequence_item_cdr_clock::type_id::create("resp");
 			item_collected_port = new("item_collected_port", this);
 		endfunction : build_phase
 
@@ -148,11 +151,22 @@ package monitor_cdr_top;
 			super.run_phase(phase);
 			@(negedge vif.TxBitCLK)
 			forever begin
-				@(negedge vif.recovered_clock)
-				resp.time_sample = $realtime;
-				item_collected_port.write(resp);
+				sample_item();
 			end
 		endtask : run_phase
+
+		virtual task sample_item();
+			sequence_item_cdr_clock resp = sequence_item_cdr_clock::type_id::create("resp");
+			@(negedge vif.recovered_clock)
+			resp.edge_type = "negedge";
+			resp.time_sample = $realtime;
+			item_collected_port.write(resp);
+			@(posedge vif.recovered_clock)
+			resp.edge_type = "posedge";
+			resp.time_sample = $realtime;
+			item_collected_port.write(resp);
+		endtask : sample_item
+
 
 	endclass
 
