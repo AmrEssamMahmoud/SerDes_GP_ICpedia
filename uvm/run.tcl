@@ -1,7 +1,7 @@
 
 #Change this variable to one of the following values
 #EQUALIZATION_TOP CDR_TOP SERDES_TOP ENCODER PISO SIPO DECODER CDR EQUALIZATION
-set design_block EQUALIZATION
+set design_block EQUALIZATION_TOP
 
 set design_block_if [string cat [string tolower $design_block] _if]
 set path top
@@ -47,9 +47,11 @@ switch $design_block {
     }
     EQUALIZATION_TOP {
         add wave /top/channel_response
+        add wave /top/equalizer/out_prev
     }
     EQUALIZATION {
         add wave /top/channel_response
+        add wave /top/equalizer/out_prev
     }
     ENCODER {
         add wave /top/encoder/assertions_encoder_i/five_consecutive_bits_assert

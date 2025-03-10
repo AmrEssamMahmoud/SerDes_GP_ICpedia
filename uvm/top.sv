@@ -8,7 +8,7 @@ import test::*;
 `endif
 
 `ifdef EQUALIZATION_CLOCKS
-    `timescale 10ps/10ps
+    `timescale 1ps/1ps
 `elsif CDR_TOP
     `timescale 1ps/10fs
 `else
@@ -23,8 +23,8 @@ module top();
 
     `ifdef EQUALIZATION_CLOCKS
         parameter phase_delay = 0;
-        parameter tx_clk_delay = 10;
-        parameter rx_clk_delay = 10;
+        parameter tx_clk_delay = 100;
+        parameter rx_clk_delay = 100;
 
         initial begin
             forever begin
