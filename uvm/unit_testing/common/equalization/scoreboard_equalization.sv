@@ -18,30 +18,23 @@ package scoreboard_equalization;
         endfunction
 
         virtual function void write_equalization(sequence_item_equalization packet);
-            equalization_q.push_back(packet);
             //**************************//
             // TODO: Check Results Here //
             //**************************//
-            // if (packet.Serial_out==packet.Serial_in)begin
-            //     correct_count++;
-            // end
-            // else begin
-            //     error_count++;
-            // end
+        
             equalization_q.push_back(packet);
-            if (equalization_q.size() >2) begin
+            if (equalization_q.size() > 2  ) begin
+
                 sequence_item_equalization old_packet = equalization_q.pop_front();
             if (packet.Serial_in != old_packet.Serial_out) begin
                 error_count++;
-                `uvm_error(get_type_name(), $sformatf("Test Failed: input = %d but output = %d ", old_packet.Serial_in, packet.Serial_out))
-
+                `uvm_error(get_type_name(), $sformatf("Test Failed: input = %d but output = %d ", old_packet.Serial_out, packet.Serial_in))
             end
             else begin
                 correct_count++;
-                `uvm_info(get_type_name(), $sformatf("Test Pass: data received = %d", packet.Serial_out), UVM_LOW);
-                            end
+                `uvm_info(get_type_name(), $sformatf("Test Pass: data received = %d", packet.Serial_in), UVM_LOW);
             end
-            
+            end 
         endfunction 
 
         function void report_phase(uvm_phase phase);
