@@ -34,7 +34,7 @@ package driver_equalization;
             //*************************//
             // TODO: Drive Inputs Here //
             //*************************//
-            vif.Serial_in = rhs.Serial_in;
+            vif.Serial_out = rhs.Serial_out;
         endtask : drive_item
 
     endclass

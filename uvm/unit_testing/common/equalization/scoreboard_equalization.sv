@@ -29,7 +29,7 @@ package scoreboard_equalization;
             //     error_count++;
             // end
             equalization_q.push_back(packet);
-            if (equalization_q.size() > 1) begin
+            if (equalization_q.size() >2) begin
                 sequence_item_equalization old_packet = equalization_q.pop_front();
             if (packet.Serial_in != old_packet.Serial_out) begin
                 error_count++;
