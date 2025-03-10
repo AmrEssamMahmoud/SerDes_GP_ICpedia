@@ -7,8 +7,8 @@ module channel(
     real in_prev = 0.0;           // Internal state to store the previous input   
 
     always @(posedge clk) begin
-        // y[n] = 0.2696 * u[n-1] + 0.7304 * y[n-1]
-        out_prev <= 0.2696 * in_prev + 0.7304 * out_prev;
+        // y[n] = 0.005222 * u[n-1] + 0.9948 * y[n-1]
+        out_prev <= 0.005222 * in_prev + 0.9948 * out_prev;
         in_prev <= channel_in;
     end
 
