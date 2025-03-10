@@ -1,6 +1,6 @@
  fc = (5/6)*(10^9); %cutoff frequency that gives -10dB at the channel
  wc = 2*pi*fc;
- ts = 10^-12 ; %sampling time (1ps) 
+ ts = 2*10^-12 ; %sampling time (2ps) 
  fs = 1/ts;  %sampling frequency
 
  %%%%%%%%% channel %%%%%
@@ -10,14 +10,14 @@
 
  %%%%%%%%% equalizer %%%%%%%%%%%%
  num_equalizer=[1/wc 1];
- wq_1 = 18.38*(10^9); wq_2 = 2*wq_1;   %the poles of equalizer that gives -0.1dB after channel and equalizer
+ wq_1 = 2*pi*18.38*(10^9); wq_2 = 2*wq_1;   %the poles of equalizer that gives -0.1dB after channel and equalizer
  den_equalizer = [1/(wq_1*wq_2),(1/wq_1)+(1/wq_2),1];
  equalizer_c = tf(num_equalizer,den_equalizer)
  equalizer_d = c2d(equalizer_c,ts)
 
  %%%%%%%%% channel*equalizer %%%%%%%%%%
  ch_eq_c = channel_c * equalizer_c
- ch_eq_d = (ch_eq_c,ts)
+ ch_eq_d = c2d(ch_eq_c,ts)
 
  %%%%%%%%% bode diagrams (if needed) %%%%%%%%%%%%
  bode(channel_c)
