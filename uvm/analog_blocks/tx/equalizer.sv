@@ -1,7 +1,7 @@
 module equalizer (
     input clk,                // Clock signal
     input real equalizer_in,  // Input signal (filtered by the channel)
-    output real equalizer_out, // Equalized output signal (after quantization)
+    output real equalizer_out // Equalized output signal (after quantization)
 );
 
     real in_prev = 0.0; // Register to store the previous input
