@@ -1,33 +1,58 @@
 
 #Change this variable to one of the following values
-#TOP ENCODER PISO SIPO DECODER
-set design_block CDR
+#EQUALIZATION_TOP CDR_TOP SERDES_TOP ENCODER PISO SIPO DECODER CDR EQUALIZATION
+set design_block EQUALIZATION_TOP
 
 set design_block_if [string cat [string tolower $design_block] _if]
 set path top
 switch $design_block {
+    EQUALIZATION_TOP {
+        set path integration_testing/equalization_top
+    }
+    CDR_TOP {
+        set path integration_testing/cdr_top
+    }
+    SERDES_TOP {
+        set path integration_testing/serdes_top
+    }
     ENCODER {
-        set path tx/encoder
+        set path unit_testing/tx/encoder
     }
     PISO {
-        set path tx/piso
+        set path unit_testing/tx/piso
     }
     SIPO {
-        set path rx/sipo
+        set path unit_testing/rx/sipo
     }
     DECODER {
-        set path rx/decoder
+        set path unit_testing/rx/decoder
     }
     CDR {
-        set path rx/cdr
+        set path unit_testing/rx/cdr
+    }
+    EQUALIZATION {
+        set path unit_testing/common/equalization
     }
 }
-vlog -f $path/runfiles.f +define+$design_block +cover
+vlog +acc -f $path/runfiles.f +define+$design_block +cover
 
 vsim -voptargs=+acc -voptargs="+cover=bcefst" work.top -cover -classdebug +UVM_TESTNAME=test +UVM_VERBOSITY=UVM_HIGH -sv_seed 1
 
 add wave /top/$design_block_if/*
 switch $design_block {
+    CDR_TOP {
+        run 100fs
+        add wave /uvm_root/uvm_test_top/env_i/scoreboard_cdr_top_i/phase
+        add wave /uvm_root/uvm_test_top/env_i/scoreboard_cdr_top_i/ppm_rx
+    }
+    EQUALIZATION_TOP {
+        add wave /top/channel_response
+        add wave /top/equalizer/out_prev
+    }
+    EQUALIZATION {
+        add wave /top/channel_response
+        add wave /top/equalizer/out_prev
+    }
     ENCODER {
         add wave /top/encoder/assertions_encoder_i/five_consecutive_bits_assert
         add wave /top/encoder/assertions_encoder_i/five_consecutive_bits_cover

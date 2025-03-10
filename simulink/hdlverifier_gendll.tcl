@@ -1,6 +1,6 @@
 open_project hdlverifier_wizard_project/wizprj.xpr
 set_property -name {xelab.debug_level} -value {all} -objects [get_filesets sim_1]
-set_property -name {xelab.more_options} -value { --timescale 1ps/1ps --override_timeprecision } -objects [get_filesets sim_1]
+set_property -name {xelab.more_options} -value { --timescale 100fs/100fs --override_timeprecision } -objects [get_filesets sim_1]
 set_property -name {xelab.dll} -value {1} -objects [get_filesets sim_1]
 set_property -name {xelab.snapshot} -value {design} -objects [get_filesets sim_1]
 

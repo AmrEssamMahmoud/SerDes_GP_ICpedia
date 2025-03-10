@@ -11,8 +11,8 @@ module digital_top (
     input phase_clock,
     input Dn_in, Dn_1_in, Pn_in,
     output Dn_out, Dn_1_out, Pn_out,
-    input decision_in,
-    output decision_out,
+    input [1:0] decision_in,
+    output [1:0] decision_out,
     input recovered_clock,
     output [8:0] phase_shift,
     output [9:0] TxParallel_10_out, RxParallel_10_out,
@@ -28,8 +28,8 @@ module digital_top (
     wire [1:0] gainsel;
     assign gainsel = 0;
 
-    sampler sampler(.Reset(Reset), .data_clock(data_clock), .phase_clock(phase_clock), .Serial(Serial_in), .Dn_1(Dn_1_out), .Dn(Dn_1_out), .Pn(Pn_out));
-    phase_detector phase_detector(.Dn_1(Dn_1_in), .Dn(Dn_1_in), .Pn(Pn_in), .decision(decision_out));
-    loop_filter loop_filter(.input_signal(decision_in), .clk(recovered_clock), .Reset(Reset), .gainsel(gainsel), .output_signal(phase_shift));
+    sampler sampler(.Reset(Reset), .data_clock(data_clock), .phase_clock(phase_clock), .Serial(Serial_in), .Dn_1(Dn_1_out), .Dn(Dn_out), .Pn(Pn_out));
+    phase_detector phase_detector(.recovered_clock(recovered_clock), .Reset(Reset), .Dn_1(Dn_1_in), .Dn(Dn_in), .Pn(Pn_in), .decision(decision_out));
+    loop_filter loop_filter(.input_signal(decision_in), .recovered_clock(recovered_clock), .Reset(Reset), .gainsel(gainsel), .output_signal(phase_shift));
 
 endmodule
