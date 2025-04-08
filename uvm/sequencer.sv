@@ -19,6 +19,8 @@ package sequencer;
         import sequence_item_cdr::*;
     `elsif EQUALIZATION
         import sequence_item_equalization::*;
+    `elsif BUFFER
+        import sequence_item_buffer::*;
     `endif
 
     class sequencer extends uvm_sequencer #(
@@ -40,6 +42,8 @@ package sequencer;
             sequence_item_cdr
         `elsif EQUALIZATION
             sequence_item_equalization
+        `elsif BUFFER
+            sequence_item_buffer
         `endif
     );
         `uvm_component_utils(sequencer)

@@ -29,7 +29,10 @@ package test;
     `elsif EQUALIZATION
 		import sequence_item_equalization::*;
 		import sequence_equalization::*;
-    `endif
+    `elsif BUFFER
+		import sequence_item_buffer::*;
+		import sequence_buffer::*;
+	`endif
 
 
 	class test extends uvm_test;
@@ -54,6 +57,8 @@ package test;
 			sequence_cdr sequence_i;
 		`elsif EQUALIZATION
 			sequence_equalization sequence_i;
+		`elsif BUFFER
+			sequence_buffer sequence_i;
 		`endif
 
 		function new(input string name = "test", uvm_component parent = null);
@@ -81,6 +86,8 @@ package test;
 				sequence_i = sequence_cdr::type_id::create("sequence_i",this);
 			`elsif EQUALIZATION
 				sequence_i = sequence_equalization::type_id::create("sequence_i",this);
+			`elsif BUFFER
+				sequence_i = sequence_buffer::type_id::create("sequence_i",this);
 			`endif
 		endfunction: build_phase
 
@@ -97,6 +104,8 @@ package test;
 					sequence_i.start(env_i.agent_cdr_top_in_i.sequencer_i);
 				`elsif SERDES_TOP
 					sequence_i.start(env_i.agent_serdes_top_in_i.sequencer_i);
+				`elsif BUFFER
+					sequence_i.start(env_i.agent_buffer_in_i.sequencer_i);
 				`else
 					sequence_i.start(env_i.agent_block_i.sequencer_i);
 				`endif

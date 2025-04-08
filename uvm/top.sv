@@ -237,6 +237,21 @@ module top();
             .equalizer_out(equalization_if.Serial_in)
         );
         bind equalizer assertions_equalization assertions_equalization_i(equalization_if.DUT);
+    `elsif BUFFER
+        buffer_if buffer_if (.rclk(TxBitCLK_10), .lclk(RxBitCLK_10));
+        elastic_buffer elastic_buffer(
+            .rclk(TxBitCLK_10),
+            .lclk(RxBitCLK_10),
+            .rrst_n(buffer_if.rrst_n),
+            .data_in_vld(buffer_if.data_in_vld),
+            .full(buffer_if.full),
+            .lrst_n(buffer_if.lrst_n),
+            .data_out_vld(buffer_if.data_out_vld),
+            .empty(buffer_if.empty),
+            .data_in(buffer_if.data_in),
+            .data_out(buffer_if.data_out)
+        );
+        bind elastic_buffer assertions_buffer assertions_buffer_i(buffer_if.DUT);
     `endif
 
     initial begin
@@ -258,6 +273,8 @@ module top();
             uvm_config_db #(virtual cdr_if)::set(null, "*", "cdr_if", cdr_if);
         `elsif EQUALIZATION
             uvm_config_db #(virtual equalization_if)::set(null, "*", "equalization_if", equalization_if);
+        `elsif BUFFER
+            uvm_config_db #(virtual buffer_if)::set(null, "*", "buffer_if", buffer_if);
         `endif
         run_test("test");
     end

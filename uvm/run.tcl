@@ -1,7 +1,7 @@
 
 #Change this variable to one of the following values
 #EQUALIZATION_TOP CDR_TOP SERDES_TOP ENCODER PISO SIPO DECODER CDR EQUALIZATION
-set design_block EQUALIZATION_TOP
+set design_block BUFFER
 
 set design_block_if [string cat [string tolower $design_block] _if]
 set path top
@@ -32,6 +32,9 @@ switch $design_block {
     }
     EQUALIZATION {
         set path unit_testing/common/equalization
+    }
+    BUFFER {
+        set path unit_testing/rx/elastic_buffer
     }
 }
 vlog +acc -f $path/runfiles.f +define+$design_block +cover
