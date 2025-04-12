@@ -5,7 +5,10 @@ package scoreboard_buffer;
 
     class scoreboard_buffer extends uvm_scoreboard;
         `uvm_component_utils(scoreboard_buffer)
-        
+
+        bit [9:0] SKP_SYM1 = 10'h0f9; // First SKP symbol (COM)
+        bit [9:0] SKP_SYM2 = 10'h306; // Second SKP symbol (SKP)
+
         int correct_count;
         int error_count;
 
@@ -25,15 +28,21 @@ package scoreboard_buffer;
         endfunction
 
         virtual function void write_buffer_in(sequence_item_buffer packet);
-            `uvm_info(get_type_name(), $sformatf("I am in the in"), UVM_LOW)
-            buffer_input_q.push_back(packet);
+            if (packet.data_in != SKP_SYM1 && packet.data_in != SKP_SYM2) begin
+                buffer_input_q.push_back(packet);
+            end
         endfunction
 
         virtual function void write_buffer_out(sequence_item_buffer packet);
-            `uvm_info(get_type_name(), $sformatf("I am in the out"), UVM_LOW)
-            if (buffer_input_q.size() > 0) begin
-                // input_packet = buffer_input_q.pop_back();
-
+            if (buffer_input_q.size() > 0 && packet.data_out != SKP_SYM1 && packet.data_out != SKP_SYM2) begin
+                sequence_item_buffer input_packet = buffer_input_q.pop_front();
+                // `uvm_info(get_type_name(), $sformatf("input_data = %0d while output_data = %0d",input_packet.data_in , packet.data_out), UVM_LOW)
+                if (input_packet.data_in != packet.data_out) begin
+                    `uvm_error(get_type_name(), $sformatf("test_failed_input_data = %h but output data = %h ", input_packet.data_in , packet.data_out))
+                    error_count ++;
+                end else begin
+                    correct_count ++;
+                end
             end
         endfunction
 

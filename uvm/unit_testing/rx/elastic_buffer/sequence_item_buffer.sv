@@ -6,8 +6,8 @@ package sequence_item_buffer;
     class sequence_item_buffer extends uvm_sequence_item ;
         `uvm_object_utils (sequence_item_buffer)
 
-        rand bit [9:0] parallel_in;
-        bit [9:0] serial_out;
+        rand bit [9:0] data_in;
+        bit [9:0] data_out;
 
         function new (string name = "sequence_item_buffer");
             super.new(name);

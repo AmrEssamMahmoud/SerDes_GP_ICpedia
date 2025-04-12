@@ -11,6 +11,8 @@ import test::*;
     `timescale 1ps/1ps
 `elsif CDR_TOP
     `timescale 1ps/10fs
+`elsif BUFFER
+    `timescale 1ps/10fs
 `else
     `timescale 100ps/100ps
 `endif
@@ -67,6 +69,13 @@ module top();
                 #0.05 continous_clock = ~continous_clock;
             end
         end
+    `elsif BUFFER
+
+        real phase_delay = 0;
+        real ppm = 10000;
+        real tx_clk_delay = 100 - (ppm * 1e-4);
+        real rx_clk_delay = 100;
+
     `else
         parameter phase_delay = 0;
         parameter tx_clk_delay = 1;

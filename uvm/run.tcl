@@ -80,6 +80,17 @@ switch $design_block {
         # add wave /top/loop_filter/assertions_cdr_i/COVER_EARLY
         # add wave /top/loop_filter/assertions_cdr_i/COVER_LATE
     }
+    BUFFER {
+        add wave /top/elastic_buffer/valid_data_count
+        add wave /top/elastic_buffer/assert__write_ptr_increments
+        add wave /top/elastic_buffer/cover__write_ptr_increments
+        add wave /top/elastic_buffer/assert__read_ptr_increments
+        add wave /top/elastic_buffer/cover__read_ptr_increments
+        add wave /top/elastic_buffer/assert__fifo_empty_flag_check
+        add wave /top/elastic_buffer/cover__fifo_empty_flag_check
+        add wave /top/elastic_buffer/assert__fifo_full_flag_check
+        add wave /top/elastic_buffer/cover__fifo_full_flag_check
+    }
 }
 
 # un-comment the following line to generate the coverage file

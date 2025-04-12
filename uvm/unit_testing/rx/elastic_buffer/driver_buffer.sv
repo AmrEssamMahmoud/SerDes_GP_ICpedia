@@ -19,9 +19,12 @@ package driver_buffer;
 
         task run_phase(uvm_phase phase);
             super.run_phase(phase);
-            // vif.Reset=0;
-            // @(negedge vif.BitCLK);
-            // vif.Reset=1;
+            vif.rrst_n=0;
+            vif.lrst_n=0;
+            @(negedge vif.rclk);
+            vif.rrst_n=1;
+            vif.lrst_n=1;
+            vif.data_in_vld=1;
             forever begin
                 seq_item_port.get_next_item(req);
                 drive_item(req);
@@ -31,7 +34,7 @@ package driver_buffer;
 
         virtual task drive_item(sequence_item_buffer rhs);
             @(negedge vif.rclk);
-            // vif.TxParallel_10 = rhs.parallel_in;
+            vif.data_in = rhs.data_in;
         endtask : drive_item
 
     endclass

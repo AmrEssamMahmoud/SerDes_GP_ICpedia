@@ -135,8 +135,8 @@ module elastic_buffer (
     // Write pointer logic (Recovered Clock Domain)
     always @(posedge rclk or negedge rrst_n) begin
         if (!rrst_n) begin
-            wr_ptr_bin <= {ADDR_WIDTH{1'b0}};
-            wr_ptr_gray <= {ADDR_WIDTH{1'b0}};
+            wr_ptr_bin = {ADDR_WIDTH{HALF_FULL}};
+            wr_ptr_gray = bin2gray(wr_ptr_bin);
             write_pause <= 1'b0;
         end else if (data_in_vld) begin
             if (skp_delete) begin
@@ -287,5 +287,42 @@ module elastic_buffer (
     // Generate empty and full flags
     assign empty = (rd_ptr_gray == wr_ptr_gray_sync2);
     assign full = (wr_ptr_gray == {~rd_ptr_gray_sync2[ADDR_WIDTH-1:ADDR_WIDTH-2], rd_ptr_gray_sync2[ADDR_WIDTH-3:0]});
+
+
+property write_ptr_increments;
+  @(posedge rclk)
+  disable iff (!rrst_n)
+  data_in_vld |=> ((wr_ptr_bin == $past(wr_ptr_bin) + 1) || (wr_ptr_bin == 0 && $past(wr_ptr_bin) == FIFO_DEPTH-1));
+endproperty
+
+assert property (write_ptr_increments);
+cover property (write_ptr_increments);
+
+property read_ptr_increments;
+  @(posedge lclk)
+  disable iff (!lrst_n)
+  data_out_vld |-> ((rd_ptr_bin == $past(rd_ptr_bin) + 1) || (rd_ptr_bin == 0 && $past(rd_ptr_bin) == FIFO_DEPTH-1));
+endproperty
+
+assert property (read_ptr_increments);
+cover property (read_ptr_increments);
+
+property fifo_empty_flag_check;
+  @(posedge rclk)
+  disable iff (rrst_n)
+  (rd_ptr_sync_bin == wr_ptr_sync_bin) |-> empty;
+endproperty
+
+assert property (fifo_empty_flag_check);
+cover property (fifo_empty_flag_check);
+
+property fifo_full_flag_check;
+  @(posedge lclk)
+  disable iff (lrst_n)
+  ((wr_ptr_sync_bin + 1) % FIFO_DEPTH == rd_ptr_sync_bin) |-> empty;
+endproperty
+
+assert property (fifo_full_flag_check);
+cover property (fifo_full_flag_check);
 
 endmodule

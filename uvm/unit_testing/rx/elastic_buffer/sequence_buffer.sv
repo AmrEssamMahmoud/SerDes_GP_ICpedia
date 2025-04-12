@@ -15,7 +15,22 @@ package sequence_buffer;
         endfunction : new
 
         virtual task body();
-            repeat(10) begin
+            
+            repeat(300) begin
+                sequence_item = sequence_item_buffer::type_id::create("sequence_item");
+                start_item(sequence_item);
+                assert(sequence_item.randomize());
+                finish_item(sequence_item);
+            end
+            sequence_item = sequence_item_buffer::type_id::create("sequence_item");
+            start_item(sequence_item);
+            sequence_item.data_in = 10'h0f9;
+            finish_item(sequence_item);
+            sequence_item = sequence_item_buffer::type_id::create("sequence_item");
+            start_item(sequence_item);
+            sequence_item.data_in = 10'h306;
+            finish_item(sequence_item);
+            repeat(50) begin
                 sequence_item = sequence_item_buffer::type_id::create("sequence_item");
                 start_item(sequence_item);
                 assert(sequence_item.randomize());

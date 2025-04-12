@@ -1,6 +1,6 @@
 interface buffer_if (rclk, lclk);
     input rclk, lclk;
-    bit rrst_n, data_in_vld, full, lrst_n, data_out_vld, empty;
+    bit rrst_n, lrst_n, data_in_vld, data_out_vld, full, empty;
     bit [9:0] data_in, data_out;
     
     modport DUT (
