@@ -1,5 +1,4 @@
-
-module elastic_buffer (
+module usb3_elastic_buffer (
     // Recovered Clock Domain signals
     input wire          rclk,        // Recovered clock
     input wire          rrst_n,      // Recovered clock domain reset, active low
@@ -15,18 +14,20 @@ module elastic_buffer (
     output wire         empty        // Buffer empty indicator
 );
 
-    // Define SKP symbols as per USB 3.0 specifications
-    // COM symbol followed by SKP symbol
-    localparam [9:0] SKP_SYM1 = 10'h0f9; // First SKP symbol (COM)
-    localparam [9:0] SKP_SYM2 = 10'h306; // Second SKP symbol (SKP)
-
+    // Define USB 3.0 SKP ordered-set symbols
+    // In USB 3.0, a SKP ordered set is a COM symbol followed by one or more SKP symbols
+    localparam [9:0] COM_SYM = 10'h1BC; // COM symbol (K28.5)  not accurate
+    localparam [9:0] SKP_SYM = 10'h1A1; // SKP symbol (K28.1)  not accurate
+    
     // Buffer size parameters
     localparam FIFO_DEPTH = 16;         // Total buffer depth
     localparam ADDR_WIDTH = 4;          // Address width = log2(FIFO_DEPTH)
-    localparam HALF_FULL = 8;           // Half-full threshold
-    localparam ADD_THRESHOLD = 6;       // Threshold to add SKP
-    localparam DEL_THRESHOLD = 10;      // Threshold to delete SKP
-
+    
+    // SKP handling thresholds - USB 3.0 uses the nominal half-full approach
+    localparam HALF_FULL = 8;           // Half-full nominal position
+    localparam ADD_THRESHOLD = 5;       // Add SKP below this level
+    localparam DEL_THRESHOLD = 11;      // Delete SKP above this level
+    
     // Memory element (dual-port RAM)
     reg [9:0] mem [0:FIFO_DEPTH-1];
     
@@ -50,21 +51,23 @@ module elastic_buffer (
     wire [ADDR_WIDTH-1:0] wr_ptr_sync_bin; // Write pointer in local clock domain
     wire [ADDR_WIDTH-1:0] rd_ptr_sync_bin; // Read pointer in recovered clock domain
     
-    // Control signals
-    reg is_skp;                         // Flag to detect SKP symbols
-    reg skp_delete_req;                 // Request to delete SKP
-    reg skp_delete;                     // Delete SKP command
-    reg skp_add_req;                    // Request to add SKP
-    reg skp_add;                        // Add SKP command
-    reg read_pause;                     // Pause read pointer flag
-    reg write_pause;                    // Pause write pointer flag
-    reg is_output_skp;                  // Flag indicating output is SKP
-    reg [3:0] valid_data_count;         // Count of valid data in FIFO
+    // SKP ordered-set detection and handling 
+    reg [1:0] skp_seq_state;             // State machine for SKP ordered-set detection
+    localparam SKP_IDLE = 2'b00;         // Not in SKP ordered-set
+    localparam SKP_FOUND = 2'b01;        // COM symbol detected, in a SKP ordered-set
     
-    reg skp_pair_detected;              // Flag for detecting SKP symbol pair
-    reg [1:0] skp_count;                // Counter for SKP symbol pair
-    reg skp_insert;                     // Flag to insert SKP symbols
-    reg [1:0] skp_insert_count;         // Counter for inserting SKP symbols
+    reg skp_ordered_set;                 // Currently in a SKP ordered-set
+    reg skp_com_detected;                // COM symbol detected
+    reg skp_delete;                      // Flag to delete current SKP
+    reg skp_add;                         // Flag to add SKP symbols
+    reg [1:0] skp_add_count;             // Counter for adding multiple SKP symbols
+    
+    // Control signals
+    reg write_pause;                     // Pause write pointer for SKP removal
+    reg read_pause;                      // Pause read pointer flag
+    
+    // Buffer fill level tracking
+    reg [ADDR_WIDTH:0] fill_level;       // Current buffer fill level
     
     // Convert from Gray code to binary
     function [ADDR_WIDTH-1:0] gray2bin;
@@ -87,52 +90,73 @@ module elastic_buffer (
         end
     endfunction
     
-    // Calculate valid data count based on synchronized pointers
+    // Calculate fill level based on synchronized pointers
     always @* begin
         if (wr_ptr_sync_bin >= rd_ptr_bin)
-            valid_data_count = wr_ptr_sync_bin - rd_ptr_bin;
+            fill_level = wr_ptr_sync_bin - rd_ptr_bin;
         else
-            valid_data_count = FIFO_DEPTH + wr_ptr_sync_bin - rd_ptr_bin;
+            fill_level = FIFO_DEPTH + wr_ptr_sync_bin - rd_ptr_bin;
     end
     
-    // Input SKP detection logic (Recovered Clock Domain)
+    // SKP ordered-set detection (Recovered Clock Domain)
     always @(posedge rclk or negedge rrst_n) begin
         if (!rrst_n) begin
-            skp_count <= 2'd0;
-            skp_pair_detected <= 1'b0;
+            skp_seq_state <= SKP_IDLE;
+            skp_ordered_set <= 1'b0;
+            skp_com_detected <= 1'b0;
         end else if (data_in_vld) begin
-            if (data_in == SKP_SYM1 && skp_count == 2'd0) begin
-                skp_count <= 2'd1;
-                skp_pair_detected <= 1'b0;
-            end else if (data_in == SKP_SYM2 && skp_count == 2'd1) begin
-                skp_count <= 2'd0;
-                skp_pair_detected <= 1'b1;
-            end else begin
-                skp_count <= 2'd0;
-                skp_pair_detected <= 1'b0;
-            end
+            case (skp_seq_state)
+                SKP_IDLE: begin
+                    if (data_in == COM_SYM) begin
+                        skp_seq_state <= SKP_FOUND;
+                        skp_com_detected <= 1'b1;
+                        skp_ordered_set <= 1'b1;
+                    end else begin
+                        skp_com_detected <= 1'b0;
+                        skp_ordered_set <= 1'b0;
+                    end
+                end
+                
+                SKP_FOUND: begin
+                    skp_com_detected <= 1'b0;
+                    if (data_in == SKP_SYM) begin
+                        // Continue in SKP ordered-set
+                        skp_ordered_set <= 1'b1;
+                    end else if (data_in == COM_SYM) begin
+                        // New COM detected - start new ordered set
+                        skp_com_detected <= 1'b1;
+                        skp_ordered_set <= 1'b1;
+                    end else begin
+                        // End of SKP ordered-set
+                        skp_seq_state <= SKP_IDLE;
+                        skp_ordered_set <= 1'b0;
+                    end
+                end
+                
+                default: begin
+                    skp_seq_state <= SKP_IDLE;
+                    skp_ordered_set <= 1'b0;
+                    skp_com_detected <= 1'b0;
+                end
+            endcase
         end
     end
     
-    // SKP delete request logic (Recovered Clock Domain)
-    always @(posedge rclk or negedge rrst_n) begin
-        if (!rrst_n) begin
-            skp_delete_req <= 1'b0;
-        end else begin
-            skp_delete_req <= (valid_data_count > DEL_THRESHOLD);
-        end
-    end
-    
-    // SKP delete control logic (Recovered Clock Domain)
+    // SKP symbol removal control logic (Recovered Clock Domain)
     always @(posedge rclk or negedge rrst_n) begin
         if (!rrst_n) begin
             skp_delete <= 1'b0;
         end else begin
-            skp_delete <= skp_delete_req && skp_pair_detected && !full;
+            // Delete SKP symbols only if:
+            // 1. We're in a SKP ordered-set
+            // 2. Current symbol is a SKP (not the COM)
+            // 3. Buffer fill level exceeds deletion threshold
+            skp_delete <= skp_ordered_set && !skp_com_detected && 
+                          (data_in == SKP_SYM) && (fill_level > DEL_THRESHOLD);
         end
     end
     
-    // Write pointer logic (Recovered Clock Domain)
+    // Write pointer and memory write control (Recovered Clock Domain)
     always @(posedge rclk or negedge rrst_n) begin
         if (!rrst_n) begin
             wr_ptr_bin <= {ADDR_WIDTH{1'b0}};
@@ -140,13 +164,13 @@ module elastic_buffer (
             write_pause <= 1'b0;
         end else if (data_in_vld) begin
             if (skp_delete) begin
-                // Pause write pointer for SKP deletion
+                // Skip this SKP symbol to delete it
                 write_pause <= 1'b1;
             end else begin
                 // Normal write operation
+                write_pause <= 1'b0;
                 wr_ptr_bin <= wr_ptr_bin_next;
                 wr_ptr_gray <= wr_ptr_gray_next;
-                write_pause <= 1'b0;
             end
         end else begin
             write_pause <= 1'b0;
@@ -178,45 +202,29 @@ module elastic_buffer (
     // Convert synchronized Gray code write pointer to binary
     assign wr_ptr_sync_bin = gray2bin(wr_ptr_gray_sync2);
     
-    // SKP add request logic (Local Clock Domain)
+    // SKP addition control (Local Clock Domain)
     always @(posedge lclk or negedge lrst_n) begin
         if (!lrst_n) begin
-            skp_add_req <= 1'b0;
-        end else begin
-            skp_add_req <= (valid_data_count < ADD_THRESHOLD);
-        end
-    end
-    
-    // Output SKP detection and SKP add control logic (Local Clock Domain)
-    always @(posedge lclk or negedge lrst_n) begin
-        if (!lrst_n) begin
-            is_output_skp <= 1'b0;
             skp_add <= 1'b0;
-            skp_insert <= 1'b0;
-            skp_insert_count <= 2'd0;
+            skp_add_count <= 2'd0;
         end else begin
-            // Detect if current output data is a SKP symbol
-            if (mem[rd_ptr_bin] == SKP_SYM1) begin
-                is_output_skp <= 1'b1;
-            end else if (mem[rd_ptr_bin] == SKP_SYM2 && is_output_skp) begin
-                is_output_skp <= 1'b0;
-                // Activate SKP add if needed
-                skp_add <= skp_add_req && !empty;
-            end else begin
-                is_output_skp <= 1'b0;
-                skp_add <= 1'b0;
-            end
-            
-            // Control SKP insertion process
-            if (skp_add) begin
-                skp_insert <= 1'b1;
-                skp_insert_count <= 2'd0;
-            end else if (skp_insert) begin
-                if (skp_insert_count == 2'd1) begin
-                    skp_insert <= 1'b0;
+            if (fill_level < ADD_THRESHOLD && (skp_add_count == 2'd0)) begin
+                // Buffer getting too empty, need to add SKP symbols
+                if (fill_level < ADD_THRESHOLD - 2) begin
+                    // Buffer very low, add 2 SKP symbols
+                    skp_add <= 1'b1;
+                    skp_add_count <= 2'd2;
                 end else begin
-                    skp_insert_count <= skp_insert_count + 1'b1;
+                    // Buffer moderately low, add 1 SKP symbol
+                    skp_add <= 1'b1;
+                    skp_add_count <= 2'd1;
                 end
+            end else if (skp_add_count > 0) begin
+                // Continue adding SKP symbols until count reaches zero
+                skp_add <= 1'b1;
+                skp_add_count <= skp_add_count - 1'b1;
+            end else begin
+                skp_add <= 1'b0;
             end
         end
     end
@@ -227,18 +235,18 @@ module elastic_buffer (
             rd_ptr_bin <= {ADDR_WIDTH{1'b0}};
             rd_ptr_gray <= {ADDR_WIDTH{1'b0}};
             read_pause <= 1'b0;
-        end else if (!empty) begin
-            if (skp_insert) begin
-                // Pause read pointer for SKP insertion
+        end else begin
+            if (skp_add) begin
+                // Don't increment read pointer when inserting SKP symbols
                 read_pause <= 1'b1;
-            end else begin
+            end else if (!empty) begin
                 // Normal read operation
+                read_pause <= 1'b0;
                 rd_ptr_bin <= rd_ptr_bin_next;
                 rd_ptr_gray <= rd_ptr_gray_next;
+            end else begin
                 read_pause <= 1'b0;
             end
-        end else begin
-            read_pause <= 1'b0;
         end
     end
     
@@ -252,13 +260,15 @@ module elastic_buffer (
             data_out <= 10'd0;
             data_out_vld <= 1'b0;
         end else begin
-            if (skp_insert) begin
-                // Output SKP symbols during insertion
+            if (skp_add) begin
+                // Insert SKP symbols
                 data_out_vld <= 1'b1;
-                if (skp_insert_count == 2'd0) begin
-                    data_out <= SKP_SYM1; // First SKP symbol
+                if (skp_add_count == 2'd2) begin
+                    // First inserted SKP should be COM
+                    data_out <= COM_SYM;
                 end else begin
-                    data_out <= SKP_SYM2; // Second SKP symbol
+                    // Additional inserted symbols are SKP
+                    data_out <= SKP_SYM;
                 end
             end else if (!empty) begin
                 // Normal read operation
