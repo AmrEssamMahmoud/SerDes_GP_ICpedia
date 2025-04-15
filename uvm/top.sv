@@ -98,7 +98,7 @@ module top();
     end
 
     `ifdef EQUALIZATION_TOP
-        real channel_response;
+        real channel_response, frequency;
         equalization_top_if equalization_top_if (TxBitCLK, TxBitCLK_10);
         equalization_top_module equalization_top_module (
             .BitCLK(TxBitCLK),
@@ -121,7 +121,12 @@ module top();
         equalizer equalizer (
             .clk(continous_clock),
             .equalizer_in(channel_response),
+            .frequency(frequency),
             .equalizer_out(equalization_top_if.Serial_in)
+        );
+        channel_estimation channel_estimation (
+            .data(equalization_top_if.Serial_in)
+            .frequency(frequency)
         );
         bind equalization_top_module assertions_equalization_top assertions_equalization_top_i(equalization_top_if.DUT);
     `elsif CDR_TOP

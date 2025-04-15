@@ -5,8 +5,12 @@
 ../hdl/designs/rx/SIPO.sv
 ../hdl/designs/equalization_top_module.sv
 
-analog_blocks/tx/equalizer.sv
 analog_blocks/common/channel.sv
+analog_blocks/tx/equalizer.sv
+analog_blocks/tx/equalization/eye_sampler.sv
+analog_blocks/tx/equalization/eye_calculation.sv
+analog_blocks/tx/equalization/parameter_update.sv
+analog_blocks/tx/equalization/channel_estimation.sv
 
 //interface
 enums_pkg.sv
