@@ -65,7 +65,7 @@ package monitor_buffer;
 			super.run_phase(phase);
 			@(posedge vif.lrst_n)
 			@(posedge vif.data_out_vld)
-			repeat(10) @(negedge vif.lclk);
+			repeat(2) @(negedge vif.lclk);
 			forever begin
 				sample_item();
 			end

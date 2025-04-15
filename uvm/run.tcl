@@ -81,7 +81,8 @@ switch $design_block {
         # add wave /top/loop_filter/assertions_cdr_i/COVER_LATE
     }
     BUFFER {
-        add wave /top/elastic_buffer/valid_data_count
+        add wave /top/elastic_buffer/fill_level
+        add wave /top/elastic_buffer/mem
         add wave /top/elastic_buffer/assert__write_ptr_increments
         add wave /top/elastic_buffer/cover__write_ptr_increments
         add wave /top/elastic_buffer/assert__read_ptr_increments

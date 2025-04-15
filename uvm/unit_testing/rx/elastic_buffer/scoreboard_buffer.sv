@@ -6,8 +6,8 @@ package scoreboard_buffer;
     class scoreboard_buffer extends uvm_scoreboard;
         `uvm_component_utils(scoreboard_buffer)
 
-        bit [9:0] SKP_SYM1 = 10'h0f9; // First SKP symbol (COM)
-        bit [9:0] SKP_SYM2 = 10'h306; // Second SKP symbol (SKP)
+        bit [9:0] COM_SYM = 10'h1BC;
+        bit [9:0] SKP_SYM = 10'h1A1;
 
         int correct_count;
         int error_count;
@@ -28,13 +28,13 @@ package scoreboard_buffer;
         endfunction
 
         virtual function void write_buffer_in(sequence_item_buffer packet);
-            if (packet.data_in != SKP_SYM1 && packet.data_in != SKP_SYM2) begin
+            if (packet.data_in != SKP_SYM) begin
                 buffer_input_q.push_back(packet);
             end
         endfunction
 
         virtual function void write_buffer_out(sequence_item_buffer packet);
-            if (buffer_input_q.size() > 0 && packet.data_out != SKP_SYM1 && packet.data_out != SKP_SYM2) begin
+            if (buffer_input_q.size() > 0 && packet.data_out != SKP_SYM) begin
                 sequence_item_buffer input_packet = buffer_input_q.pop_front();
                 // `uvm_info(get_type_name(), $sformatf("input_data = %0d while output_data = %0d",input_packet.data_in , packet.data_out), UVM_LOW)
                 if (input_packet.data_in != packet.data_out) begin

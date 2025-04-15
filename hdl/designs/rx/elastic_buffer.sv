@@ -1,4 +1,4 @@
-module usb3_elastic_buffer (
+module elastic_buffer (
     // Recovered Clock Domain signals
     input wire          rclk,        // Recovered clock
     input wire          rrst_n,      // Recovered clock domain reset, active low
@@ -69,6 +69,18 @@ module usb3_elastic_buffer (
     // Buffer fill level tracking
     reg [ADDR_WIDTH:0] fill_level;       // Current buffer fill level
     
+    reg [3:0] start_count;
+
+    always @(posedge rclk or negedge rrst_n) begin
+        if (!rrst_n) begin
+            start_count <= 0;
+        end else begin
+            if (start_count < 9) begin
+                start_count <= start_count + 1;
+            end
+        end
+    end
+
     // Convert from Gray code to binary
     function [ADDR_WIDTH-1:0] gray2bin;
         input [ADDR_WIDTH-1:0] gray;
@@ -142,48 +154,25 @@ module usb3_elastic_buffer (
         end
     end
     
-    // SKP symbol removal control logic (Recovered Clock Domain)
-    always @(posedge rclk or negedge rrst_n) begin
-        if (!rrst_n) begin
-            skp_delete <= 1'b0;
-        end else begin
-            // Delete SKP symbols only if:
-            // 1. We're in a SKP ordered-set
-            // 2. Current symbol is a SKP (not the COM)
-            // 3. Buffer fill level exceeds deletion threshold
-            skp_delete <= skp_ordered_set && !skp_com_detected && 
-                          (data_in == SKP_SYM) && (fill_level > DEL_THRESHOLD);
-        end
-    end
-    
     // Write pointer and memory write control (Recovered Clock Domain)
     always @(posedge rclk or negedge rrst_n) begin
         if (!rrst_n) begin
-            wr_ptr_bin = {ADDR_WIDTH{HALF_FULL}};
-            wr_ptr_gray = bin2gray(wr_ptr_bin);
+            wr_ptr_bin = {ADDR_WIDTH{1'b0}};
+            wr_ptr_gray = {ADDR_WIDTH{1'b0}};
             write_pause <= 1'b0;
         end else if (data_in_vld) begin
-            if (skp_delete) begin
-                // Skip this SKP symbol to delete it
-                write_pause <= 1'b1;
-            end else begin
-                // Normal write operation
-                write_pause <= 1'b0;
-                wr_ptr_bin <= wr_ptr_bin_next;
-                wr_ptr_gray <= wr_ptr_gray_next;
-            end
-        end else begin
-            write_pause <= 1'b0;
+            wr_ptr_bin <= wr_ptr_bin_next;
+            wr_ptr_gray <= wr_ptr_gray_next;
         end
     end
     
     // Calculate next write pointer values
-    assign wr_ptr_bin_next = (write_pause) ? wr_ptr_bin : ((wr_ptr_bin == FIFO_DEPTH-1) ? {ADDR_WIDTH{1'b0}} : wr_ptr_bin + 1'b1);
+    assign wr_ptr_bin_next = ((data_in == SKP_SYM) && (fill_level > DEL_THRESHOLD)) ? wr_ptr_bin : ((wr_ptr_bin == FIFO_DEPTH-1) ? {ADDR_WIDTH{1'b0}} : wr_ptr_bin + 1'b1);
     assign wr_ptr_gray_next = bin2gray(wr_ptr_bin_next);
     
     // Write data to memory (Recovered Clock Domain)
     always @(posedge rclk) begin
-        if (data_in_vld && !full && !write_pause) begin
+        if (data_in_vld && !full) begin
             mem[wr_ptr_bin] <= data_in;
         end
     end
@@ -236,22 +225,13 @@ module usb3_elastic_buffer (
             rd_ptr_gray <= {ADDR_WIDTH{1'b0}};
             read_pause <= 1'b0;
         end else begin
-            if (skp_add) begin
-                // Don't increment read pointer when inserting SKP symbols
-                read_pause <= 1'b1;
-            end else if (!empty) begin
-                // Normal read operation
-                read_pause <= 1'b0;
-                rd_ptr_bin <= rd_ptr_bin_next;
-                rd_ptr_gray <= rd_ptr_gray_next;
-            end else begin
-                read_pause <= 1'b0;
-            end
+            rd_ptr_bin <= rd_ptr_bin_next;
+            rd_ptr_gray <= rd_ptr_gray_next;
         end
     end
     
     // Calculate next read pointer values
-    assign rd_ptr_bin_next = (read_pause) ? rd_ptr_bin : ((rd_ptr_bin == FIFO_DEPTH-1) ? {ADDR_WIDTH{1'b0}} : rd_ptr_bin + 1'b1);
+    assign rd_ptr_bin_next = (start_count < 9 || (data_out == COM_SYM && fill_level < ADD_THRESHOLD)) ? rd_ptr_bin : ((rd_ptr_bin == FIFO_DEPTH-1) ? {ADDR_WIDTH{1'b0}} : rd_ptr_bin + 1'b1);
     assign rd_ptr_gray_next = bin2gray(rd_ptr_bin_next);
     
     // Read data and control output (Local Clock Domain)
@@ -260,22 +240,9 @@ module usb3_elastic_buffer (
             data_out <= 10'd0;
             data_out_vld <= 1'b0;
         end else begin
-            if (skp_add) begin
-                // Insert SKP symbols
-                data_out_vld <= 1'b1;
-                if (skp_add_count == 2'd2) begin
-                    // First inserted SKP should be COM
-                    data_out <= COM_SYM;
-                end else begin
-                    // Additional inserted symbols are SKP
-                    data_out <= SKP_SYM;
-                end
-            end else if (!empty) begin
-                // Normal read operation
-                data_out <= mem[rd_ptr_bin];
-                data_out_vld <= 1'b1;
-            end else begin
-                data_out_vld <= 1'b0;
+            data_out <= mem[rd_ptr_bin];
+            if (start_count >= 9) begin
+                data_out_vld <= 1;
             end
         end
     end
@@ -296,7 +263,8 @@ module usb3_elastic_buffer (
     
     // Generate empty and full flags
     assign empty = (rd_ptr_gray == wr_ptr_gray_sync2);
-    assign full = (wr_ptr_gray == {~rd_ptr_gray_sync2[ADDR_WIDTH-1:ADDR_WIDTH-2], rd_ptr_gray_sync2[ADDR_WIDTH-3:0]});
+    // assign full = (wr_ptr_gray == {~rd_ptr_gray_sync2[ADDR_WIDTH-1:ADDR_WIDTH-1], rd_ptr_gray_sync2[ADDR_WIDTH-2:0]});
+    assign full = fill_level == 16;
 
 
 property write_ptr_increments;
