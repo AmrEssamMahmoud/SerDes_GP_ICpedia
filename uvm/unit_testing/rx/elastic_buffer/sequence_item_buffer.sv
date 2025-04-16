@@ -8,6 +8,9 @@ package sequence_item_buffer;
 
         rand bit [9:0] data_in;
         bit [9:0] data_out;
+        constraint not_comma_nor_skp {soft data_in !=  10'h1BC;
+        soft data_in !=  10'h1A1;}
+        
 
         function new (string name = "sequence_item_buffer");
             super.new(name);

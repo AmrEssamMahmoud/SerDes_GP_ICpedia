@@ -91,6 +91,11 @@ switch $design_block {
         add wave /top/elastic_buffer/cover__fifo_empty_flag_check
         add wave /top/elastic_buffer/assert__fifo_full_flag_check
         add wave /top/elastic_buffer/cover__fifo_full_flag_check
+        add wave /top/elastic_buffer/assert__skp_deletion
+        add wave /top/elastic_buffer/cover__skp_deletion
+        add wave /top/elastic_buffer/cover__skp
+         add wave /top/elastic_buffer/cover__skp_insertion
+        add wave /top/elastic_buffer/assert__skp_insertion
     }
 }
 

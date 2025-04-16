@@ -26,7 +26,7 @@ module elastic_buffer (
     // SKP handling thresholds - USB 3.0 uses the nominal half-full approach
     localparam HALF_FULL = 8;           // Half-full nominal position
     localparam ADD_THRESHOLD = 5;       // Add SKP below this level
-    localparam DEL_THRESHOLD = 11;      // Delete SKP above this level
+    localparam DEL_THRESHOLD = 10;      // Delete SKP above this level
     
     // Memory element (dual-port RAM)
     reg [9:0] mem [0:FIFO_DEPTH-1];
@@ -269,7 +269,7 @@ module elastic_buffer (
 
 property write_ptr_increments;
   @(posedge rclk)
-  disable iff (!rrst_n)
+  disable iff (!rrst_n || ( (data_in==SKP_SYM) && (fill_level > DEL_THRESHOLD))) 
   data_in_vld |=> ((wr_ptr_bin == $past(wr_ptr_bin) + 1) || (wr_ptr_bin == 0 && $past(wr_ptr_bin) == FIFO_DEPTH-1));
 endproperty
 
@@ -278,8 +278,8 @@ cover property (write_ptr_increments);
 
 property read_ptr_increments;
   @(posedge lclk)
-  disable iff (!lrst_n)
-  data_out_vld |-> ((rd_ptr_bin == $past(rd_ptr_bin) + 1) || (rd_ptr_bin == 0 && $past(rd_ptr_bin) == FIFO_DEPTH-1));
+  disable iff (!lrst_n || ( data_out == SKP_SYM && fill_level < ADD_THRESHOLD)) //behavior of iff is current clock 
+  data_out_vld && (start_count >=9) |=> ((rd_ptr_bin == $past(rd_ptr_bin) + 1) || (rd_ptr_bin == 0 && $past(rd_ptr_bin) == FIFO_DEPTH-1));
 endproperty
 
 assert property (read_ptr_increments);
@@ -302,5 +302,25 @@ endproperty
 
 assert property (fifo_full_flag_check);
 cover property (fifo_full_flag_check);
-
+property skp_deletion ;
+    @(posedge rclk)
+    disable iff (!lrst_n)
+    (data_in==SKP_SYM) && (fill_level > DEL_THRESHOLD) |=> ((data_out!=SKP_SYM) [*8] ); //wabt to make it fill level instead of 8 
+  endproperty
+  property skp ;
+    @(posedge rclk)
+    disable iff (!lrst_n)
+    (data_in==SKP_SYM)
+  endproperty
+  
+  assert property (skp_deletion);
+  cover property (skp_deletion);
+  cover property (skp);
+  property skp_insertion ;
+    @(posedge lclk)
+    disable iff (!lrst_n)
+   ( data_out == COM_SYM && fill_level <=8 )|=> ((data_out==SKP_SYM) [*2] );
+  endproperty
+  assert property (skp_insertion);
+  cover property (skp_insertion);
 endmodule

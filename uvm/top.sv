@@ -74,7 +74,7 @@ module top();
         real phase_delay = 0;
         real ppm = 10000;
         real tx_clk_delay = 100 - (ppm * 1e-4);
-        real rx_clk_delay = 100;
+        real rx_clk_delay = 100 ;
 
     `else
         parameter phase_delay = 0;
