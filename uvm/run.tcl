@@ -48,6 +48,7 @@ switch $design_block {
     EQUALIZATION_TOP {
         add wave /top/channel_response
         add wave /top/equalizer/out_prev
+        add wave /top/equalizer/frequency
     }
     EQUALIZATION {
         add wave /top/channel_response

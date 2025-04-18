@@ -7,6 +7,8 @@
 
 analog_blocks/common/channel.sv
 analog_blocks/tx/equalizer.sv
+analog_blocks/rx/cdr/phase_interpolator.sv
+analog_blocks/tx/equalization/clock_generator.sv
 analog_blocks/tx/equalization/eye_sampler.sv
 analog_blocks/tx/equalization/eye_calculation.sv
 analog_blocks/tx/equalization/parameter_update.sv

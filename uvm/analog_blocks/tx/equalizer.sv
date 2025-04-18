@@ -1,7 +1,6 @@
 module equalizer (
     input clk,                // Clock signal
     input real equalizer_in,  // Input signal (filtered by the channel)
-    input real frequency,
     output real equalizer_out // Equalized output signal (after quantization)
 );
 
@@ -10,6 +9,7 @@ module equalizer (
     real out_prev = 0.0; // Register to store the previous output
     real out_prev_prev = 0.0; // Register to store the previous of previous output
     real c1, c2;
+    real frequency;
 
     always @(posedge clk) begin
         // y[n] = 1.424 y[n-1] - 0.5001 y[n-2] + 7.264 u[n-1] - 7.188 u[n-2]
@@ -27,5 +27,11 @@ module equalizer (
           equalizer_out <= 0;
         end
     end
+
+    channel_estimation channel_estimation (
+        .clk(clk),
+        .data(out_prev),
+        .frequency(frequency)
+    );
 
 endmodule
