@@ -1,5 +1,9 @@
 //DUT
-../hdl/designs/rx/elastic_buffer.sv
+../hdl/designs/rx/elastic_buffer/buffer_memory.sv
+../hdl/designs/rx/elastic_buffer/buffer_write.sv
+../hdl/designs/rx/elastic_buffer/buffer_read.sv
+../hdl/designs/rx/elastic_buffer/synchronizer.sv
+../hdl/designs/rx/elastic_buffer/elastic_buffer.sv
 
 //interface
 enums_pkg.sv

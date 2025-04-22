@@ -19,12 +19,11 @@ package driver_buffer;
 
         task run_phase(uvm_phase phase);
             super.run_phase(phase);
-            vif.rrst_n=0;
-            vif.lrst_n=0;
-            @(negedge vif.rclk);
-            vif.rrst_n=1;
-            vif.lrst_n=1;
-            vif.data_in_vld=1;
+            vif.recovered_reset=0;
+            vif.local_reset=0;
+            @(negedge vif.recovered_clock);
+            vif.recovered_reset=1;
+            vif.local_reset=1;
             forever begin
                 seq_item_port.get_next_item(req);
                 drive_item(req);
@@ -33,7 +32,7 @@ package driver_buffer;
         endtask : run_phase
 
         virtual task drive_item(sequence_item_buffer rhs);
-            @(negedge vif.rclk);
+            @(negedge vif.recovered_clock);
             vif.data_in = rhs.data_in;
         endtask : drive_item
 

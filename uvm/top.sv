@@ -72,7 +72,8 @@ module top();
     `elsif BUFFER
 
         real phase_delay = 0;
-        real ppm = 10000;
+        real abs_ppm = $urandom_range(5300, 4000);
+        real ppm = $urandom_range(1, 0) ? abs_ppm : -1 * abs_ppm;
         real tx_clk_delay = 100 - (ppm * 1e-4);
         real rx_clk_delay = 100 ;
 
@@ -247,18 +248,18 @@ module top();
         );
         bind equalizer assertions_equalization assertions_equalization_i(equalization_if.DUT);
     `elsif BUFFER
-        buffer_if buffer_if (.rclk(TxBitCLK_10), .lclk(RxBitCLK_10));
+        buffer_if buffer_if (.recovered_clock(TxBitCLK_10), .local_clock(RxBitCLK_10));
         elastic_buffer elastic_buffer(
-            .rclk(TxBitCLK_10),
-            .lclk(RxBitCLK_10),
-            .rrst_n(buffer_if.rrst_n),
-            .data_in_vld(buffer_if.data_in_vld),
-            .full(buffer_if.full),
-            .lrst_n(buffer_if.lrst_n),
-            .data_out_vld(buffer_if.data_out_vld),
-            .empty(buffer_if.empty),
+            .recovered_clock(TxBitCLK_10),
+            .local_clock(RxBitCLK_10),
+            .recovered_reset(buffer_if.recovered_reset),
+            .local_reset(buffer_if.local_reset),
             .data_in(buffer_if.data_in),
-            .data_out(buffer_if.data_out)
+            .data_out(buffer_if.data_out),
+            .underflow(buffer_if.underflow),
+            .overflow(buffer_if.overflow),
+            .skip_added(buffer_if.skip_added),
+            .skip_removed(buffer_if.skip_removed)
         );
         bind elastic_buffer assertions_buffer assertions_buffer_i(buffer_if.DUT);
     `endif

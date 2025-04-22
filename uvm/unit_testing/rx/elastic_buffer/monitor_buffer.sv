@@ -25,8 +25,11 @@ package monitor_buffer;
 
 		virtual task run_phase(uvm_phase phase);
 			super.run_phase(phase);
-			@(posedge vif.rrst_n)
-			@(negedge vif.rclk)
+			@(posedge vif.recovered_reset)
+			forever begin
+				@(negedge vif.recovered_clock);
+				if (vif.data_in == 10'h1BC) break;
+			end
 			forever begin
 				sample_item();
 			end
@@ -34,7 +37,7 @@ package monitor_buffer;
 
 		virtual task sample_item();
 			sequence_item_buffer resp = sequence_item_buffer::type_id::create("resp");
-			@(negedge vif.rclk);
+			@(negedge vif.recovered_clock);
 			resp.data_in = vif.data_in;
 			item_collected_port.write(resp);
 		endtask : sample_item
@@ -63,9 +66,11 @@ package monitor_buffer;
 
 		virtual task run_phase(uvm_phase phase);
 			super.run_phase(phase);
-			@(posedge vif.lrst_n)
-			@(posedge vif.data_out_vld)
-			repeat(2) @(negedge vif.lclk);
+			@(posedge vif.local_reset)
+			forever begin
+				@(negedge vif.local_clock);
+				if (vif.data_out == 10'h1BC) break;
+			end
 			forever begin
 				sample_item();
 			end
@@ -73,7 +78,7 @@ package monitor_buffer;
 
 		virtual task sample_item();
 			sequence_item_buffer resp = sequence_item_buffer::type_id::create("resp");
-			@(negedge vif.lclk);
+			@(negedge vif.local_clock);
 			resp.data_out = vif.data_out;
 			item_collected_port.write(resp);
 		endtask : sample_item

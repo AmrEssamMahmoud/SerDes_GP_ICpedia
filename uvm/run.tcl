@@ -81,21 +81,13 @@ switch $design_block {
         # add wave /top/loop_filter/assertions_cdr_i/COVER_LATE
     }
     BUFFER {
-        add wave /top/elastic_buffer/fill_level
-        add wave /top/elastic_buffer/mem
-        add wave /top/elastic_buffer/assert__write_ptr_increments
-        add wave /top/elastic_buffer/cover__write_ptr_increments
-        add wave /top/elastic_buffer/assert__read_ptr_increments
-        add wave /top/elastic_buffer/cover__read_ptr_increments
-        add wave /top/elastic_buffer/assert__fifo_empty_flag_check
-        add wave /top/elastic_buffer/cover__fifo_empty_flag_check
-        add wave /top/elastic_buffer/assert__fifo_full_flag_check
-        add wave /top/elastic_buffer/cover__fifo_full_flag_check
-        add wave /top/elastic_buffer/assert__skp_deletion
-        add wave /top/elastic_buffer/cover__skp_deletion
-        add wave /top/elastic_buffer/cover__skp
-         add wave /top/elastic_buffer/cover__skp_insertion
-        add wave /top/elastic_buffer/assert__skp_insertion
+        add wave /top/elastic_buffer/buffer_memory/memory
+        add wave /top/elastic_buffer/buffer_write/fill_level
+        add wave /top/elastic_buffer/buffer_read/fill_level
+        add wave /top/elastic_buffer/assertions_buffer_i/overflow_assert
+        add wave /top/elastic_buffer/assertions_buffer_i/overflow_cover
+        add wave /top/elastic_buffer/assertions_buffer_i/underflow_assert
+        add wave /top/elastic_buffer/assertions_buffer_i/underflow_cover
     }
 }
 

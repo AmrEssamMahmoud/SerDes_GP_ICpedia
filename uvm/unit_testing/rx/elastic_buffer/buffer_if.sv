@@ -1,11 +1,11 @@
-interface buffer_if (rclk, lclk);
-    input rclk, lclk;
-    bit rrst_n, lrst_n, data_in_vld, data_out_vld, full, empty;
+interface buffer_if (recovered_clock, local_clock);
+    input recovered_clock, local_clock;
+    bit recovered_reset, local_reset, underflow, overflow, skip_added, skip_removed;
     bit [9:0] data_in, data_out;
     
     modport DUT (
-        input rclk, rrst_n, data_in, data_in_vld, lclk, lrst_n,
-        output full, data_out, data_out_vld, empty
+        input recovered_clock, recovered_reset, local_clock, local_reset, data_in,
+        output data_out, underflow, overflow, skip_added, skip_removed
     );
 
 endinterface
