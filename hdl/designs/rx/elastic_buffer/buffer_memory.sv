@@ -25,7 +25,7 @@ module buffer_memory #(
         if (!local_reset) begin
             data_out <= 0;
         end else begin
-            data_out = memory[read_pointer];
+            data_out <= memory[read_pointer];
         end
     end
 

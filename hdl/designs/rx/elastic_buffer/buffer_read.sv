@@ -44,14 +44,12 @@ module buffer_read #(
                     skip_added = 1;
                 end else
                     next_state = WAITING_FOR_COMMA;
-            SKIP_AND_STALL:
+            SKIP_AND_STALL: begin
                 next_state = SKIP_AND_CONTINUE;
+                skip_added = 1;
+            end
             SKIP_AND_CONTINUE:
-                if (data_out == SKIP_SYMBOL) begin
-                    next_state = SKIP_AND_STALL;
-                    skip_added = 1;
-                end else
-                    next_state = WAITING_FOR_COMMA;
+                next_state = WAITING_FOR_COMMA;
             default:
                 next_state = WAITING_FOR_COMMA;
         endcase
