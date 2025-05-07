@@ -2,52 +2,70 @@ module parameter_update (
     input logic clock_with_shift,
     input real opening,
     input logic opening_ready,
-    output real frequency
+    output logic [8:0] guess_frequency
 );
 
-    real prev_frequency;
-    real prev_opening = 0.0;
-    real gradient = 1e-8;
-    real velocity = 0.0;
-    real target = 1; //سايبهالك تعملها لو عايز تحط مارجين سواء هنا او في الكوندشن
-    real learning_rate = 1e13; //حطها انت يا علي مثلا 200 ولا 100
-    real diff = 0.0;
-    real rho = 0.99;
-    logic first = 1;
-    real loss_function;
+    parameter TARGET = 0.96;
+    parameter NUMBER_OF_DIVIDES = 3;
+    parameter NUMBER_OF_SAMPLES = 6;
+    parameter LINEAR_RANGE = 512 / (2 ** NUMBER_OF_DIVIDES);
 
-    always @(posedge clock_with_shift) begin
-        // if (opening_ready) begin
-        //     if (opening > target) begin
-        //         frequency = frequency + 2e6;
-        //     end else begin
-        //         frequency = frequency - 2e6;
-        //     end
-        // end
-        loss_function = loss(opening);
-        if (opening_ready) begin
-            if (abs(frequency - prev_frequency) > 1e5 && !first) begin
-                gradient = (loss(opening) - loss(prev_opening)) / (frequency - prev_frequency);
+    real diff;
+    int min, i;
+    int phase_counter = 0;
+    int iteration = 0;
+    real samples [0:LINEAR_RANGE-1];
+    logic [8:0] step = 512 / (NUMBER_OF_SAMPLES - 1);
+    logic [8:0] base = 0;
+
+    initial guess_frequency = 0;
+
+    always @(posedge opening_ready) begin
+        if (phase_counter < NUMBER_OF_DIVIDES) begin
+            samples[iteration] = loss(opening);
+            if (iteration == NUMBER_OF_SAMPLES - 1) begin
+                phase_counter += 1;
+                iteration = 0;
+                step = step >> 1;
+                
+                min = 0;
+                for (i = 0; i < NUMBER_OF_SAMPLES; i++) begin
+                    if (samples[i] < samples[min])
+                        min = i;
+                end
+                
+                if (min >= NUMBER_OF_SAMPLES/2) begin
+                    base += step * (NUMBER_OF_SAMPLES-1);
+                end
+
+                guess_frequency = base;
+
+            end else begin
+                iteration += 1;
+                guess_frequency += step;
             end
-            first = 0;
-            velocity = rho * velocity + gradient;
-            prev_frequency <= frequency;
-            prev_opening <= opening;
-            frequency <= frequency - learning_rate * velocity;
+        end else if (phase_counter == NUMBER_OF_DIVIDES) begin
+            samples[iteration] = loss(opening);
+            if (iteration == LINEAR_RANGE - 1) begin
+                phase_counter += 1;
+
+                min = 0;
+                for (i = 0; i < LINEAR_RANGE; i++) begin
+                    if (samples[i] < samples[min])
+                        min = i;
+                end
+
+                guess_frequency = base + min;
+            end else begin
+                iteration += 1;
+                guess_frequency += 1;
+            end
         end
     end
 
-    initial begin
-        frequency = 400e6 + gradient;
-        prev_frequency = 400e6;
-    end
-
     function real loss(input real x);
-        diff = x - target;
+        diff = x - TARGET;
         return (diff < 0.0) ? -diff : diff;
     endfunction
 
-    function real abs(input real x);
-        return (x < 0.0) ? -x : x;
-    endfunction
 endmodule

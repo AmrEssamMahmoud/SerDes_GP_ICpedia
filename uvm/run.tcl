@@ -49,10 +49,7 @@ switch $design_block {
         add wave /top/channel_response
         add wave /top/equalizer/out_prev
         add wave /top/equalizer/frequency
-        add wave /top/equalizer/channel_estimation/parameter_update/opening
-        add wave /top/equalizer/channel_estimation/parameter_update/loss_function
-        add wave /top/equalizer/channel_estimation/parameter_update/gradient
-        add wave /top/equalizer/channel_estimation/parameter_update/velocity
+        add wave /top/equalizer/guess_frequency
     }
     EQUALIZATION {
         add wave /top/channel_response
