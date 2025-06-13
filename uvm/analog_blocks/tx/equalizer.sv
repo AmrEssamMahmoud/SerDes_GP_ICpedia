@@ -8,9 +8,17 @@ module equalizer (
     real in_prev_prev = 0.0; // Register to store the previous of previous input
     real out_prev = 0.0; // Register to store the previous output
     real out_prev_prev = 0.0; // Register to store the previous of previous output
+    real c1, c2;
+    logic [8:0] guess_frequency;
+    real frequency;
+
     always @(posedge clk) begin
         // y[n] = 1.424 y[n-1] - 0.5001 y[n-2] + 7.264 u[n-1] - 7.188 u[n-2]
-        out_prev <= 1.424 * out_prev - 0.5001 * out_prev_prev + 7.264 * in_prev - 7.188 * in_prev_prev;
+        frequency = 100e6 + guess_frequency * 5e6;
+        c1 = 0.0425434079+6019033046.3/frequency;
+        c2 = 0.0337683818-6019033046.3/frequency;
+        out_prev <= 1.424 * out_prev - 0.5001 * out_prev_prev + c1 * in_prev + c2 * in_prev_prev;
+        
         in_prev <= equalizer_in  ; // Update the previous input
         in_prev_prev <= in_prev; // Update the previous of previous input
         out_prev_prev <= out_prev ; // Update the previous of previous output
@@ -21,5 +29,11 @@ module equalizer (
           equalizer_out <= 0;
         end
     end
+
+    channel_estimation channel_estimation (
+        .clk(clk),
+        .data(out_prev),
+        .guess_frequency(guess_frequency)
+    );
 
 endmodule
