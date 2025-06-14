@@ -1,17 +1,24 @@
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 import test::*;
+
 `ifdef EQUALIZATION
     `define EQUALIZATION_CLOCKS
 `elsif EQUALIZATION_TOP
     `define EQUALIZATION_CLOCKS
 `endif
 
+`ifdef TOP
+    `define CDR_CLOCKS
+`elsif CDR_TOP
+    `define CDR_CLOCKS
+`elsif BUFFER
+    `define CDR_CLOCKS
+`endif
+
 `ifdef EQUALIZATION_CLOCKS
     `timescale 1ps/1ps
-`elsif CDR_TOP
-    `timescale 1ps/10fs
-`elsif BUFFER
+`elsif CDR_CLOCKS
     `timescale 1ps/10fs
 `else
     `timescale 100ps/100ps
@@ -22,6 +29,7 @@ module top();
     bit TxBitCLK, TxBitCLK_10;
     bit RxBitCLK, RxBitCLK_10;
     bit continous_clock;
+    bit continous_clock_equalization;
 
     `ifdef EQUALIZATION_CLOCKS
         parameter phase_delay = 0;
@@ -31,6 +39,25 @@ module top();
         initial begin
             forever begin
                 #1 continous_clock = ~continous_clock;
+            end
+        end
+    `elsif TOP
+        
+        real phase = 0;
+        real phase_delay = 200 + (200 * phase / 360);
+        real abs_ppm = $urandom_range(300, 0);
+        real ppm = $urandom_range(1, 0) ? abs_ppm : -1 * abs_ppm;
+        real tx_clk_delay = 100 - (ppm * 1e-4);
+        real rx_clk_delay = 100;
+        
+        initial begin
+            forever begin
+                #0.05 continous_clock = ~continous_clock;
+            end
+        end
+        initial begin
+            forever begin
+                #1 continous_clock_equalization = ~continous_clock_equalization;
             end
         end
     `elsif CDR_TOP
@@ -75,7 +102,7 @@ module top();
         real abs_ppm = $urandom_range(5300, 4000);
         real ppm = $urandom_range(1, 0) ? abs_ppm : -1 * abs_ppm;
         real tx_clk_delay = 100 - (ppm * 1e-4);
-        real rx_clk_delay = 100 ;
+        real rx_clk_delay = 100;
 
     `else
         parameter phase_delay = 0;
@@ -107,7 +134,46 @@ module top();
         end
     end
 
-    `ifdef EQUALIZATION_TOP
+    `ifdef TOP
+        real channel_response;
+        top_if top_if (TxBitCLK, TxBitCLK_10, RxBitCLK, RxBitCLK_10);
+        top_module top_module (
+            .TxBitCLK(TxBitCLK),
+            .TxBitCLK_10(TxBitCLK_10),
+            .RxBitCLK(RxBitCLK),
+            .RxBitCLK_10(RxBitCLK_10),
+            .Reset(top_if.Reset),
+            .TxDataK(top_if.TxDataK),
+            .Serial_in(top_if.Serial_in),
+            .TxParallel_8(top_if.TxParallel_8[7:0]),
+            .data_clock(top_if.data_clock),
+            .phase_clock(top_if.phase_clock),
+            .recovered_clock(top_if.recovered_clock),
+            .RxDataK(top_if.RxDataK),
+            .Serial_out(top_if.Serial_out),
+            .rx_status(top_if.rx_status),
+            .RxParallel_8(top_if.RxParallel_8[7:0]),
+            .phase_shift(top_if.phase_shift)
+        );
+        phase_interpolator phase_interpolator (
+            .clk(continous_clock),
+            .data_clock(top_if.data_clock),
+            .phase_clock(top_if.phase_clock),
+            .recovered_clock(top_if.recovered_clock),
+            .phase_shift(top_if.phase_shift)
+        );
+        channel channel (
+            .clk(continous_clock_equalization),
+            .channel_in(top_if.Serial_out),
+            .channel_out(channel_response)
+        );
+        equalizer equalizer (
+            .clk(continous_clock_equalization),
+            .equalizer_in(channel_response),
+            .equalizer_out(top_if.Serial_in)
+        );
+        bind top_module assertions_top assertions_top_i(top_if.DUT);
+    `elsif EQUALIZATION_TOP
         real channel_response;
         equalization_top_if equalization_top_if (TxBitCLK, TxBitCLK_10);
         equalization_top_module equalization_top_module (
@@ -265,7 +331,9 @@ module top();
     `endif
 
     initial begin
-        `ifdef EQUALIZATION_TOP
+        `ifdef TOP
+            uvm_config_db #(virtual top_if)::set(null, "*", "top_if", top_if);
+        `elsif EQUALIZATION_TOP
             uvm_config_db #(virtual equalization_top_if)::set(null, "*", "equalization_top_if", equalization_top_if);
         `elsif CDR_TOP
             uvm_config_db #(virtual cdr_top_if)::set(null, "*", "cdr_top_if", cdr_top_if);

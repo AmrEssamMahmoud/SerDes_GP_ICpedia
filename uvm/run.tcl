@@ -1,11 +1,14 @@
 
 #Change this variable to one of the following values
 #EQUALIZATION_TOP CDR_TOP SERDES_TOP ENCODER PISO SIPO DECODER CDR EQUALIZATION
-set design_block BUFFER
+set design_block TOP
 
 set design_block_if [string cat [string tolower $design_block] _if]
 set path top
 switch $design_block {
+    TOP {
+        set path system_testing
+    }
     EQUALIZATION_TOP {
         set path integration_testing/equalization_top
     }
