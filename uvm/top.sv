@@ -72,8 +72,27 @@ module top();
         real tx_clk_delay = 100 - (ppm * 1e-4);
         real rx_clk_delay = 100;
 
-        // bit inc_or_dec = 1;
+        // real jitter = 0;
+        // real jitter_old = 0;
 
+        // initial begin
+        //     forever begin
+        //         #1000;
+        //         jitter_old = jitter;
+        //         jitter = $urandom_range(1, 0) ? jitter + $urandom_range(5, 0) : jitter - $urandom_range(5, 0);
+        //         if (jitter > 100) begin
+        //             jitter = 100;
+        //         end else if (jitter < -100) begin
+        //             jitter = -100;
+        //         end
+        //         ppm = ppm - jitter_old + jitter;
+        //         tx_clk_delay = 100 - (ppm * 1e-4);
+        //     end
+        // end
+
+        // bit inc_or_dec = 0;
+        // real ppm = 3000;
+        // real tx_clk_delay = 100 - (ppm * 1e-4);
         // initial begin
         //     forever begin
         //         #(333333.33);
@@ -82,9 +101,9 @@ module top();
         //         end else begin
         //             ppm = ppm - 100;
         //         end
-        //         if (ppm == 5000) begin
+        //         if (ppm == 5200) begin
         //             inc_or_dec = 0;
-        //         end else if (ppm == 0) begin
+        //         end else if (ppm == 200) begin
         //             inc_or_dec = 1;
         //         end
         //         tx_clk_delay = 100 - (ppm * 1e-4);

@@ -39,7 +39,7 @@ module buffer_read #(
                 else
                     next_state = WAITING_FOR_COMMA;
             COMMA_DETECTED:
-                if (data_out == SKIP_SYMBOL && fill_level < ADD_THRESHOLD) begin
+                if (data_out == SKIP_SYMBOL && fill_level <= ADD_THRESHOLD) begin
                     next_state = SKIP_AND_STALL;
                     skip_added = 1;
                 end else
@@ -82,7 +82,7 @@ module buffer_read #(
             if (write_pointer_sync >= read_pointer_async) begin
                 fill_level <= write_pointer_sync - read_pointer_async;
             end else begin
-                fill_level <= 16 + write_pointer_sync - read_pointer_async;
+                fill_level <= 32 + write_pointer_sync - read_pointer_async;
             end
         end
     end

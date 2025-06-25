@@ -37,7 +37,7 @@ module buffer_write #(
                 else
                     next_state = WAITING_FOR_COMMA;
             COMMA_DETECTED:
-                if (data_in == SKIP_SYMBOL && fill_level > REMOVE_THRESHOLD) begin
+                if (data_in == SKIP_SYMBOL && fill_level >= REMOVE_THRESHOLD) begin
                     next_state = SKIP_AND_STALL;
                     skip_removed = 1;
                 end else
@@ -68,7 +68,7 @@ module buffer_write #(
             if (write_pointer_async >= read_pointer_sync) begin
                 fill_level <= write_pointer_async - read_pointer_sync;
             end else begin
-                fill_level <= 16 + write_pointer_async - read_pointer_sync;
+                fill_level <= 32 + write_pointer_async - read_pointer_sync;
             end
         end
     end

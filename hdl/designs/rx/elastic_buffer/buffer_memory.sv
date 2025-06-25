@@ -8,12 +8,11 @@ module buffer_memory #(
     output reg [9:0] data_out
 );
     
-    integer i;
     reg [9:0] memory [0:BUFFER_DEPTH-1];
 
     always@ (posedge recovered_clock or negedge recovered_reset) begin
         if (!recovered_reset) begin
-            for (i = 0; i < BUFFER_DEPTH; i = i + 1) begin        
+            for (integer i = 0; i < BUFFER_DEPTH; i = i + 1) begin        
                 memory[i] <= 0;
             end
         end else begin

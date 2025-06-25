@@ -6,13 +6,12 @@ module synchronizer #(
     output reg [ADDRESS_WIDTH:0] pointer_sync
 );
 
-int i;
 reg [ADDRESS_WIDTH:0] pointer_chain [0:2];
 
 // binary to gray: pointer_async -> pointer_chain[0]
 always @(*) begin
     pointer_chain[0][ADDRESS_WIDTH] = pointer_async[ADDRESS_WIDTH];
-    for (i = 0; i < ADDRESS_WIDTH; i = i + 1) begin
+    for (integer i = 0; i < ADDRESS_WIDTH; i = i + 1) begin
         pointer_chain[0][i] = pointer_async[i] ^ pointer_async[i+1];
     end
 end
@@ -32,7 +31,7 @@ end
 // gray to binary: pointer_chain[2] -> pointer_sync
 always @(*) begin
     pointer_sync[ADDRESS_WIDTH] = pointer_chain[2][ADDRESS_WIDTH];
-    for (i = ADDRESS_WIDTH-1; i >= 0; i = i - 1) begin
+    for (integer i = ADDRESS_WIDTH-1; i >= 0; i = i - 1) begin
         pointer_sync[i] = pointer_chain[2][i] ^ pointer_sync[i+1];
     end
 end

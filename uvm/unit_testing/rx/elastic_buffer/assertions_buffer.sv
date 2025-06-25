@@ -24,10 +24,6 @@ module assertions_buffer (buffer_if.DUT _if);
     property underflow;
         @(posedge _if.local_clock)
         disable iff(_if.data_out == SKIP_SYMBOL) _if.data_out != SKIP_SYMBOL |-> (
-        _if.data_out != $past(_if.data_out, 1) && _if.data_out != $past(_if.data_out, 2) &&
-        _if.data_out != $past(_if.data_out, 3) && _if.data_out != $past(_if.data_out, 4) &&
-        _if.data_out != $past(_if.data_out, 5) && _if.data_out != $past(_if.data_out, 6) &&
-        _if.data_out != $past(_if.data_out, 7) && _if.data_out != $past(_if.data_out, 8) &&
         _if.data_out != $past(_if.data_out, 9) && _if.data_out != $past(_if.data_out, 10) &&
         _if.data_out != $past(_if.data_out, 11) && _if.data_out != $past(_if.data_out, 12) &&
         _if.data_out != $past(_if.data_out, 13) && _if.data_out != $past(_if.data_out, 14) &&
