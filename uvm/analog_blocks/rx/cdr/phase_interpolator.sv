@@ -1,4 +1,4 @@
-module phase_interpolator (
+module phase_interpolator #(parameter time_scale = 10e-15) (
     input logic        clk,
     input logic [8:0]  phase_shift,
     output logic       data_clock,
@@ -17,7 +17,7 @@ module phase_interpolator (
 
     always @(posedge clk) begin
 
-        current_time = $time * 10e-15;
+        current_time = $time * time_scale;
 
         sine_wave[0] = $sin(2*pi*frequency*current_time);          // phase 0
         sine_wave[1] = $sin(2*pi*frequency*current_time + pi/2);     // phase 90

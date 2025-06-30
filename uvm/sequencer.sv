@@ -1,7 +1,9 @@
 package sequencer;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-    `ifdef EQUALIZATION_TOP
+    `ifdef TOP
+        import sequence_item_top::*;
+    `elsif EQUALIZATION_TOP
         import sequence_item_equalization_top::*;
     `elsif CDR_TOP
         import sequence_item_cdr_top::*;
@@ -19,10 +21,14 @@ package sequencer;
         import sequence_item_cdr::*;
     `elsif EQUALIZATION
         import sequence_item_equalization::*;
+    `elsif BUFFER
+        import sequence_item_buffer::*;
     `endif
 
     class sequencer extends uvm_sequencer #(
-        `ifdef EQUALIZATION_TOP
+        `ifdef TOP
+            sequence_item_top
+        `elsif EQUALIZATION_TOP
             sequence_item_equalization_top
         `elsif CDR_TOP
             sequence_item_cdr_top
@@ -40,6 +46,8 @@ package sequencer;
             sequence_item_cdr
         `elsif EQUALIZATION
             sequence_item_equalization
+        `elsif BUFFER
+            sequence_item_buffer
         `endif
     );
         `uvm_component_utils(sequencer)

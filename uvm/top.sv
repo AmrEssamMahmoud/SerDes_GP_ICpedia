@@ -1,15 +1,24 @@
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 import test::*;
+
 `ifdef EQUALIZATION
     `define EQUALIZATION_CLOCKS
 `elsif EQUALIZATION_TOP
     `define EQUALIZATION_CLOCKS
 `endif
 
+`ifdef TOP
+    `define CDR_CLOCKS
+`elsif CDR_TOP
+    `define CDR_CLOCKS
+`elsif BUFFER
+    `define CDR_CLOCKS
+`endif
+
 `ifdef EQUALIZATION_CLOCKS
     `timescale 1ps/1ps
-`elsif CDR_TOP
+`elsif CDR_CLOCKS
     `timescale 1ps/10fs
 `else
     `timescale 100ps/100ps
@@ -20,6 +29,7 @@ module top();
     bit TxBitCLK, TxBitCLK_10;
     bit RxBitCLK, RxBitCLK_10;
     bit continous_clock;
+    bit continous_clock_equalization;
 
     `ifdef EQUALIZATION_CLOCKS
         parameter phase_delay = 0;
@@ -29,6 +39,25 @@ module top();
         initial begin
             forever begin
                 #1 continous_clock = ~continous_clock;
+            end
+        end
+    `elsif TOP
+        
+        real phase = 0;
+        real phase_delay = 200 + (200 * phase / 360);
+        real abs_ppm = $urandom_range(300, 0);
+        real ppm = $urandom_range(1, 0) ? abs_ppm : -1 * abs_ppm;
+        real tx_clk_delay = 100 - (ppm * 1e-4);
+        real rx_clk_delay = 100;
+        
+        initial begin
+            forever begin
+                #0.05 continous_clock = ~continous_clock;
+            end
+        end
+        initial begin
+            forever begin
+                #1 continous_clock_equalization = ~continous_clock_equalization;
             end
         end
     `elsif CDR_TOP
@@ -43,8 +72,27 @@ module top();
         real tx_clk_delay = 100 - (ppm * 1e-4);
         real rx_clk_delay = 100;
 
-        // bit inc_or_dec = 1;
+        // real jitter = 0;
+        // real jitter_old = 0;
 
+        // initial begin
+        //     forever begin
+        //         #1000;
+        //         jitter_old = jitter;
+        //         jitter = $urandom_range(1, 0) ? jitter + $urandom_range(5, 0) : jitter - $urandom_range(5, 0);
+        //         if (jitter > 100) begin
+        //             jitter = 100;
+        //         end else if (jitter < -100) begin
+        //             jitter = -100;
+        //         end
+        //         ppm = ppm - jitter_old + jitter;
+        //         tx_clk_delay = 100 - (ppm * 1e-4);
+        //     end
+        // end
+
+        // bit inc_or_dec = 0;
+        // real ppm = 3000;
+        // real tx_clk_delay = 100 - (ppm * 1e-4);
         // initial begin
         //     forever begin
         //         #(333333.33);
@@ -53,9 +101,9 @@ module top();
         //         end else begin
         //             ppm = ppm - 100;
         //         end
-        //         if (ppm == 5000) begin
+        //         if (ppm == 5200) begin
         //             inc_or_dec = 0;
-        //         end else if (ppm == 0) begin
+        //         end else if (ppm == 200) begin
         //             inc_or_dec = 1;
         //         end
         //         tx_clk_delay = 100 - (ppm * 1e-4);
@@ -67,6 +115,14 @@ module top();
                 #0.05 continous_clock = ~continous_clock;
             end
         end
+    `elsif BUFFER
+
+        real phase_delay = 0;
+        real abs_ppm = $urandom_range(5300, 4000);
+        real ppm = $urandom_range(1, 0) ? abs_ppm : -1 * abs_ppm;
+        real tx_clk_delay = 100 - (ppm * 1e-4);
+        real rx_clk_delay = 100;
+
     `else
         parameter phase_delay = 0;
         parameter tx_clk_delay = 1;
@@ -97,7 +153,46 @@ module top();
         end
     end
 
-    `ifdef EQUALIZATION_TOP
+    `ifdef TOP
+        real channel_response;
+        top_if top_if (TxBitCLK, TxBitCLK_10, RxBitCLK, RxBitCLK_10);
+        top_module top_module (
+            .TxBitCLK(TxBitCLK),
+            .TxBitCLK_10(TxBitCLK_10),
+            .RxBitCLK(RxBitCLK),
+            .RxBitCLK_10(RxBitCLK_10),
+            .Reset(top_if.Reset),
+            .TxDataK(top_if.TxDataK),
+            .Serial_in(top_if.Serial_in),
+            .TxParallel_8(top_if.TxParallel_8[7:0]),
+            .data_clock(top_if.data_clock),
+            .phase_clock(top_if.phase_clock),
+            .recovered_clock(top_if.recovered_clock),
+            .RxDataK(top_if.RxDataK),
+            .Serial_out(top_if.Serial_out),
+            .rx_status(top_if.rx_status),
+            .RxParallel_8(top_if.RxParallel_8[7:0]),
+            .phase_shift(top_if.phase_shift)
+        );
+        phase_interpolator phase_interpolator (
+            .clk(continous_clock),
+            .data_clock(top_if.data_clock),
+            .phase_clock(top_if.phase_clock),
+            .recovered_clock(top_if.recovered_clock),
+            .phase_shift(top_if.phase_shift)
+        );
+        channel channel (
+            .clk(continous_clock_equalization),
+            .channel_in(top_if.Serial_out),
+            .channel_out(channel_response)
+        );
+        equalizer equalizer (
+            .clk(continous_clock_equalization),
+            .equalizer_in(channel_response),
+            .equalizer_out(top_if.Serial_in)
+        );
+        bind top_module assertions_top assertions_top_i(top_if.DUT);
+    `elsif EQUALIZATION_TOP
         real channel_response;
         equalization_top_if equalization_top_if (TxBitCLK, TxBitCLK_10);
         equalization_top_module equalization_top_module (
@@ -237,10 +332,27 @@ module top();
             .equalizer_out(equalization_if.Serial_in)
         );
         bind equalizer assertions_equalization assertions_equalization_i(equalization_if.DUT);
+    `elsif BUFFER
+        buffer_if buffer_if (.recovered_clock(TxBitCLK_10), .local_clock(RxBitCLK_10));
+        elastic_buffer elastic_buffer(
+            .recovered_clock(TxBitCLK_10),
+            .local_clock(RxBitCLK_10),
+            .recovered_reset(buffer_if.recovered_reset),
+            .local_reset(buffer_if.local_reset),
+            .data_in(buffer_if.data_in),
+            .data_out(buffer_if.data_out),
+            .underflow(buffer_if.underflow),
+            .overflow(buffer_if.overflow),
+            .skip_added(buffer_if.skip_added),
+            .skip_removed(buffer_if.skip_removed)
+        );
+        bind elastic_buffer assertions_buffer assertions_buffer_i(buffer_if.DUT);
     `endif
 
     initial begin
-        `ifdef EQUALIZATION_TOP
+        `ifdef TOP
+            uvm_config_db #(virtual top_if)::set(null, "*", "top_if", top_if);
+        `elsif EQUALIZATION_TOP
             uvm_config_db #(virtual equalization_top_if)::set(null, "*", "equalization_top_if", equalization_top_if);
         `elsif CDR_TOP
             uvm_config_db #(virtual cdr_top_if)::set(null, "*", "cdr_top_if", cdr_top_if);
@@ -258,6 +370,8 @@ module top();
             uvm_config_db #(virtual cdr_if)::set(null, "*", "cdr_if", cdr_if);
         `elsif EQUALIZATION
             uvm_config_db #(virtual equalization_if)::set(null, "*", "equalization_if", equalization_if);
+        `elsif BUFFER
+            uvm_config_db #(virtual buffer_if)::set(null, "*", "buffer_if", buffer_if);
         `endif
         run_test("test");
     end

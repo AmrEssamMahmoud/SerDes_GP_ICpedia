@@ -1,11 +1,14 @@
 
 #Change this variable to one of the following values
 #EQUALIZATION_TOP CDR_TOP SERDES_TOP ENCODER PISO SIPO DECODER CDR EQUALIZATION
-set design_block EQUALIZATION_TOP
+set design_block TOP
 
 set design_block_if [string cat [string tolower $design_block] _if]
 set path top
 switch $design_block {
+    TOP {
+        set path system_testing
+    }
     EQUALIZATION_TOP {
         set path integration_testing/equalization_top
     }
@@ -33,6 +36,9 @@ switch $design_block {
     EQUALIZATION {
         set path unit_testing/common/equalization
     }
+    BUFFER {
+        set path unit_testing/rx/elastic_buffer
+    }
 }
 vlog +acc -f $path/runfiles.f +define+$design_block +cover
 
@@ -48,6 +54,8 @@ switch $design_block {
     EQUALIZATION_TOP {
         add wave /top/channel_response
         add wave /top/equalizer/out_prev
+        add wave /top/equalizer/frequency
+        add wave /top/equalizer/guess_frequency
     }
     EQUALIZATION {
         add wave /top/channel_response
@@ -76,6 +84,15 @@ switch $design_block {
         # add wave /top/loop_filter/assertions_cdr_i/COVER_NO_TRANSITION
         # add wave /top/loop_filter/assertions_cdr_i/COVER_EARLY
         # add wave /top/loop_filter/assertions_cdr_i/COVER_LATE
+    }
+    BUFFER {
+        add wave /top/elastic_buffer/buffer_memory/memory
+        add wave /top/elastic_buffer/buffer_write/fill_level
+        add wave /top/elastic_buffer/buffer_read/fill_level
+        add wave /top/elastic_buffer/assertions_buffer_i/overflow_assert
+        add wave /top/elastic_buffer/assertions_buffer_i/overflow_cover
+        add wave /top/elastic_buffer/assertions_buffer_i/underflow_assert
+        add wave /top/elastic_buffer/assertions_buffer_i/underflow_cover
     }
 }
 
